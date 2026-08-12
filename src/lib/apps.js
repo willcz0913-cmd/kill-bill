@@ -101,6 +101,71 @@ export const MOAT_TAGS = {
   'execution-polish': 'execution polish',
 };
 
+// Category-page title phrase (template: "{N} {phrase}: free & open source
+// picks"). Head nouns are measured, not guessed: the right one is category-
+// specific and the wrong one costs an
+// order of magnitude, so: phrases with measured volume are marked, labels that
+// already read as plural nouns stand alone, and everything else defaults to
+// "<label> tools" until a per-category volume pull replaces the guess.
+const CATEGORY_PHRASES = {
+  'notes-knowledge': 'note taking apps', // measured: "app" beats "tools" 20x
+  'dev-tools': 'dev tools',
+  'writing-assistant': 'writing tools',
+  'website-builder': 'website builders',
+  'databases': 'databases',
+  'ai-assistant': 'AI assistants',
+  'productivity-utilities': 'productivity utilities',
+  'forms': 'form builders',
+  'newsletter': 'newsletter software',
+  'testimonials': 'testimonial tools',
+  'whiteboard': 'whiteboard software',
+  'diagrams': 'diagramming software',
+  'presentations': 'presentation software',
+  'documents': 'document & PDF tools',
+  'tasks': 'to-do list apps',
+  'tasks-calendar': 'tasks & calendar apps',
+  'ai-image': 'AI image generators',
+  'ai-video': 'AI video generators',
+  'meeting-notes': 'AI meeting note takers',
+  'finance-accounting': 'accounting & finance software',
+  'no-code-apps': 'no-code app builders',
+  'personal-finance': 'personal finance software',
+  'screen-recording': 'screen recording software',
+  'hosting': 'hosting platforms',
+  'community': 'community platforms',
+  'read-it-later': 'read it later apps',
+  'email': 'email apps',
+  'cloud-storage': 'cloud storage apps',
+  'crm': 'CRM software',
+  'photo-editing': 'photo editing software',
+  'reading': 'reading apps',
+  'time-tracking': 'time tracking software',
+  'travel': 'travel apps',
+  'video-conferencing': 'video conferencing software',
+  'wellness': 'wellness apps',
+  'qr-codes': 'QR code generators',
+  'screenshots': 'screenshot tools',
+  'social-media': 'social media apps',
+  'automation': 'automation software',
+  'design': 'design software',
+  'scheduling': 'scheduling software',
+  'customer-support': 'customer support software',
+  'sales-outreach': 'sales outreach software',
+  'project-management': 'project management software',
+  'podcasting': 'podcasting software',
+  'legal': 'legal software',
+  'hr': 'HR software',
+  'monitoring': 'monitoring software',
+  'voice-dictation': 'dictation software',
+  'audio': 'music & audio apps',
+};
+
+export function categoryPhrase(slug) {
+  const meta = CATEGORIES[slug];
+  if (!meta) return null;
+  return CATEGORY_PHRASES[slug] ?? `${meta.label.toLowerCase()} tools`;
+}
+
 // One icon per moat tag, the way categories have one. No per-tag colours —
 // colour on this site means verdict.
 export const MOAT_TAG_EMOJI = {
@@ -230,6 +295,19 @@ export function sortedAlternatives(app) {
 // so the bar is 3+ — below that the verdict-page section is the whole story.
 export const ALTERNATIVES_PAGE_MIN = 3;
 
+// Apps whose bare name loses its Google SERP to the everyday word (granola is
+// a cereal results page). Their alternatives titles say "{name} app" instead.
+// Only list apps that LOSE the SERP; big brands (notion, linear) own theirs.
+export const COMMON_NOUN_SLUGS = new Set(['granola', 'timing', 'tower', 'factory']);
+
+// Dataset apps featured on /best-vibe-coding-tools; their pages link back to
+// the roundup (two-way). Keep in sync with that page's groups.
+export const VIBE_CODING_TOOL_SLUGS = new Set([
+  'cursor', 'windsurf', 'lovable', 'bolt-new', 'v0', 'replit',
+  'github-copilot', 'sourcegraph-cody', 'tabnine', 'blackbox-ai',
+  'devin', 'factory',
+]);
+
 export function appsWithAlternativesPage() {
   return allApps().filter(
     (a) => (a.alternatives ?? []).length >= ALTERNATIVES_PAGE_MIN
@@ -244,14 +322,15 @@ export const SELF_HOST_LABELS = {
   ops: 'self-host, real ops',
 };
 
-// Sitemap staging (decided 2026-08-06, Ahrefs advice): a young domain shouldn't
-// push all 350+ new pages to Google at once. The named slugs are the low-KD /
-// high-volume targets from the Ahrefs research; the rest of the ~30 fill up by
-// editorial weight. ALL alternatives pages must join the sitemap ~6-8 weeks
-// after launch — tracked in planning/16-alternatives/progress.md, do not lose.
+// Sitemap staging (decided 2026-08-06): a young domain shouldn't push all 350+
+// new pages at a search engine at once. The named slugs are the low-competition,
+// high-volume targets; the rest of the ~30 fill up by editorial weight. ALL
+// alternatives pages must join the sitemap ~6-8 weeks after launch.
 const ALT_SITEMAP_PRIORITY = [
   'zapier', 'loom', 'calendly', 'intercom', 'grammarly',
   'notion', 'mailchimp', 'docusign', 'typeform', '1password',
+  // 2026-08-07: the AI builder tools themselves, all low competition.
+  'replit', 'cursor', 'lovable', 'v0', 'bolt-new', 'windsurf',
 ];
 const ALT_SITEMAP_LIMIT = 30;
 

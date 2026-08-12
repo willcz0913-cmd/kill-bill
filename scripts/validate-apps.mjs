@@ -3,9 +3,10 @@
    Run with `npm run validate`. No dependencies, on purpose. */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { CATEGORIES, MOAT_TAGS, VERDICTS } from '../src/lib/apps.js';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'data/apps');
 
 const UNITS = ['flat', 'per-seat', 'usage', 'one-time', 'custom'];
@@ -60,6 +61,26 @@ for (const file of files) {
     continue;
   }
 
+  // Defense in depth against markup injection: app JSON is rendered into pages,
+  // including a JSON-LD <script> block, so no string field may carry the angle
+  // brackets that could break out of a tag. Reject "<" and ">" anywhere.
+  // `prompt` is exempt: the copy-paste prompts legitimately contain "<"/">"
+  // (comparisons, code) and are only ever rendered as escaped text, never into
+  // a <script>/JSON-LD block.
+  const scanAngles = (val, keyPath) => {
+    if (typeof val === 'string') {
+      if (val.includes('<') || val.includes('>')) bad(`"${keyPath}" contains "<" or ">" (not allowed in app content)`);
+    } else if (Array.isArray(val)) {
+      val.forEach((v, i) => scanAngles(v, `${keyPath}[${i}]`));
+    } else if (val && typeof val === 'object') {
+      for (const [k, v] of Object.entries(val)) {
+        if (k === 'prompt') continue;
+        scanAngles(v, keyPath ? `${keyPath}.${k}` : k);
+      }
+    }
+  };
+  scanAngles(app, '');
+
   if (app.slug !== path.basename(file, '.json')) {
     bad(`slug "${app.slug}" does not match the filename`);
   }
@@ -89,6 +110,18 @@ for (const file of files) {
     if (!UNITS.includes(app.pricing.unit)) {
       bad(`pricing.unit "${app.pricing.unit}" is not one of ${UNITS.join(' | ')}`);
     }
+    // Optional: one plain sentence about the free tier (or its absence). When
+    // present the page leads with pricing in <title>/meta, so it must be real.
+    if (app.pricing.freeTier !== undefined && app.pricing.freeTier !== null && !isStr(app.pricing.freeTier)) {
+      bad('pricing.freeTier must be a non-empty string or null');
+    }
+  }
+
+  // Optional death notice: a sentence fragment that reads as "{name} {discontinued}."
+  // ("shut down on September 24, 2025"). The page renders a post-mortem banner
+  // and stops claiming a live price when it is present.
+  if (app.discontinued !== undefined && app.discontinued !== null && !isStr(app.discontinued)) {
+    bad('discontinued must be a non-empty string or null');
   }
 
   if (Array.isArray(app.priorArt)) {

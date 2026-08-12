@@ -2,9 +2,9 @@
 import Base from '../layouts/Base.astro';
 import Ticker from '../components/Ticker.astro';
 import AppRow from '../components/AppRow.astro';
-import StatsStrip from '../components/StatsStrip.astro';
+import VisitorGlobe from '../components/VisitorGlobe.astro';
 import DigestCard from '../components/DigestCard.astro';
-import { allApps, topCategories } from '../lib/apps.js';
+import { allApps, appsWithAlternativesPage, topCategories } from '../lib/apps.js';
 import { voteCounts } from '../lib/db.js';
 
 const votes = await voteCounts();
@@ -15,6 +15,11 @@ const apps = allApps().sort(
     a.name.localeCompare(b.name)
 );
 const cats = topCategories();
+
+// Strip under the chips: numbers computed from the same source as the
+// /alternatives hub, so the claim can never drift from the pages.
+const altApps = appsWithAlternativesPage();
+const totalAlts = altApps.reduce((s, a) => s + a.alternatives.length, 0);
 
 const title = 'Killbill · Which subscriptions are one prompt away from free';
 const description =
@@ -59,10 +64,14 @@ const jsonld = [
     <div class="search-wrap">
       <div class="search">
         <span class="chevron">&gt;</span>
+        {/* Placeholder stays short on purpose: mobile bumps this input to 16px
+            (the iOS zoom guard), which clipped the old "(N on the list)" at
+            390px and narrower, and would clip harder once the count goes four
+            digits. The full count is in the line right above the box. */}
         <input
           type="search"
           id="search"
-          placeholder={`type an app… (${apps.length} on the list)`}
+          placeholder={`type an app… (${apps.length})`}
           autocomplete="off"
           aria-label="Search apps"
           role="combobox"
@@ -95,6 +104,14 @@ const jsonld = [
       <a class="chip" href="/moats">🏰 moats</a>
       <a class="chip" href="/categories">all categories →</a>
     </nav>
+    <a class="hatch-strip" href="/alternatives">
+      <span class="new-tag">NEW</span>
+      <span class="hs-copy">
+        every verdict now has an escape hatch: {totalAlts.toLocaleString('en-US')} free
+        alternatives across {altApps.length} apps
+      </span>
+      <span class="hs-cta">browse them →</span>
+    </a>
   </section>
 
   <Ticker />
@@ -135,13 +152,14 @@ const jsonld = [
       <span class="c-price">price</span>
       <span class="c-verdict">verdict</span>
       <span class="c-votes">replaced it</span>
+      <span class="c-save"></span>
     </div>
     <div id="rows">
       {
         apps.map((app, i) => (
           <Fragment>
             <AppRow {app} rank={i + 1} votes={votes(app.slug)} />
-            {i === 9 && <StatsStrip />}
+            {i === 9 && <VisitorGlobe />}
           </Fragment>
         ))
       }

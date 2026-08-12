@@ -12,9 +12,10 @@
     "unit": "flat",
     "native": "20 USD",
     "source": "https://www.simpleanalytics.com/pricing",
-    "checkedOn": "2026-07-30",
+    "checkedOn": "2026-08-07",
     "confidence": "high",
-    "notes": "Official pricing checked 2026-07-30; Starter listed at $20/month."
+    "notes": "Official pricing checked 2026-07-30; Starter listed at $20/month.",
+    "freeTier": "Free for one user and 5 websites with 30 days of history; paid keeps data longer."
   },
   "verdict": "yes",
   "verdictConfidence": "high",
@@ -70,7 +71,7 @@
     },
     {
       "name": "Plausible Community Edition",
-      "url": "https://plausible.io/community-edition",
+      "url": "https://plausible.io/self-hosted-web-analytics",
       "type": "open-source",
       "repo": "https://github.com/plausible/analytics",
       "platforms": [

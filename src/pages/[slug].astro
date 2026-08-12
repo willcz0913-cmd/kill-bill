@@ -4,12 +4,15 @@ import VerdictBadge from '../components/VerdictBadge.astro';
 import DigestCard from '../components/DigestCard.astro';
 import DigestReveal from '../components/DigestReveal.astro';
 import AltCard from '../components/AltCard.astro';
-import { getApp, relatedApps, yearlySaving, sortedAlternatives, ALTERNATIVES_PAGE_MIN, CATEGORIES, VERDICTS, MOAT_TAGS, MOAT_TAG_EMOJI } from '../lib/apps.js';
-import { voteCount, voteCounts } from '../lib/db.js';
+import { getApp, relatedApps, yearlySaving, sortedAlternatives, ALTERNATIVES_PAGE_MIN, CATEGORIES, VERDICTS, MOAT_TAGS, MOAT_TAG_EMOJI, VIBE_CODING_TOOL_SLUGS } from '../lib/apps.js';
+import { stackSlugs, voteCount, voteCounts } from '../lib/db.js';
 
 const { slug } = Astro.params;
 const app = getApp(slug);
 if (!app) return new Response(null, { status: 404 });
+
+const user = Astro.locals.user ?? null;
+const inStack = user ? (await stackSlugs(user.id)).includes(app.slug) : false;
 
 const votes = await voteCount(app.slug);
 const related = relatedApps(app, await voteCounts());
@@ -25,16 +28,43 @@ const alternatives = sortedAlternatives(app);
 const hasAltPage = alternatives.length >= ALTERNATIVES_PAGE_MIN;
 
 const verdictWord = { yes: 'YES', kinda: 'KINDA', no: 'NOT REALLY' }[app.verdict];
+const baseName = app.name.split(' / ')[0];
+// Optional death notice: a sentence fragment that composes as "{name} {discontinued}."
+// Set on apps whose product is gone; the page stays up as the post-mortem.
+const discontinued = typeof app.discontinued === 'string' ? app.discontinued : null;
 const priceLine =
   app.priceMonthly != null ? `costs $${app.priceMonthly}/mo ($${saving}/yr)` : 'has usage-based pricing';
-const title = `Can I vibecode ${app.name}? ${verdictWord} · replace it with one AI prompt`;
-const description = `${verdictWord}: ${app.name} ${priceLine}. ${
-  app.verdict === 'no'
-    ? "Here's why it survives vibecoding."
-    : `Here's the exact prompt to build your own and what you lose.`
-}`;
+const brandTitle = `Can I vibecode ${app.name}? ${verdictWord} · replace it with one AI prompt`;
+const brandDescription = discontinued
+  ? `${app.name} ${discontinued}. ${verdictWord} on vibecoding a replacement: what an AI agent can rebuild today, and the exact prompt.`
+  : `${verdictWord}: ${app.name} ${priceLine}. ${
+      app.verdict === 'no'
+        ? "Here's why it survives vibecoding."
+        : `Here's the exact prompt to build your own and what you lose.`
+    }`;
+
+// Pages with structured free-tier data lead with pricing in the <title>/meta;
+// share cards keep the brand title via socialTitle. The H1 never changes.
+const freeTier = typeof app.pricing?.freeTier === 'string' ? app.pricing.freeTier : null;
+const pricingLed = freeTier != null && app.priceMonthly != null;
+const title = pricingLed
+  ? `${baseName} pricing ${new Date().getFullYear()}: plans, free tier, and our verdict`
+  : brandTitle;
+const description = pricingLed
+  ? `${baseName} costs $${app.priceMonthly}/mo. ${freeTier} Our verdict: ${verdictWord}: what an AI agent can rebuild today, the exact prompt, and what's one prompt away from free.`
+  : brandDescription;
 
 const faq = [
+  ...(pricingLed
+    ? [
+        {
+          q: `Is ${baseName} free?`,
+          a: `${freeTier} Paid is ${app.pricing?.plan || 'the paid plan'} at $${app.priceMonthly}/mo${
+            app.pricing?.checkedOn ? ` (checked ${app.pricing.checkedOn})` : ''
+          }.`,
+        },
+      ]
+    : []),
   {
     q: `Can I vibecode ${app.name}?`,
     a:
@@ -46,8 +76,11 @@ const faq = [
   },
   {
     q: `How much does ${app.name} cost?`,
-    a:
-      app.priceMonthly != null
+    a: discontinued
+      ? `Nothing anymore: ${app.name} ${discontinued}.${
+          app.priceMonthly != null ? ` Before that it ran about $${app.priceMonthly}/month.` : ''
+        }`
+      : app.priceMonthly != null
         ? `${app.name} costs about $${app.priceMonthly}/month (${app.pricing?.plan || 'paid plan'}${
             app.pricing?.checkedOn ? `, checked ${app.pricing.checkedOn}` : ''
           }), which is $${saving} per year. ${
@@ -59,7 +92,11 @@ const faq = [
   },
   {
     q: `What do I lose by replacing ${app.name}?`,
-    a: `Honestly: ${app.whatYouLose.join('; ')}. If any of those are load-bearing for you, keep paying.`,
+    a: `Honestly: ${app.whatYouLose.join('; ')}. ${
+      discontinued
+        ? "Since the product is gone, these gaps are now everyone's problem."
+        : 'If any of those are load-bearing for you, keep paying.'
+    }`,
   },
   {
     q: `Is there an open-source alternative to ${app.name}?`,
@@ -101,11 +138,11 @@ const tweet = encodeURIComponent(
 );
 ---
 
-<Base {title} {description} ogImage={`/og/${app.slug}.png`} {jsonld}>
+<Base {title} {description} socialTitle={brandTitle} ogImage={`/og/${app.slug}.png`} {jsonld}>
   <main class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href="/">the death list</a> / <a href={`/category/${app.category}`}>{cat.label.toLowerCase()}</a> /
-      <span class="here">{app.slug}</span>
+      {/* one line: the compiler strips the newline after "/", eating the space */}
+      <a href="/">the death list</a> / <a href={`/category/${app.category}`}>{cat.label.toLowerCase()}</a> / <span class="here">{app.slug}</span>
     </nav>
 
     <div class="app-head">
@@ -113,16 +150,44 @@ const tweet = encodeURIComponent(
         <img src={`/icons/${app.slug}.png`} alt="" width="48" height="48" />
         <h1>Can I vibecode {app.name.split(' / ')[0]}?</h1>
       </span>
-      <VerdictBadge verdict={app.verdict} big />
+      <span class="verdict-side">
+        <VerdictBadge verdict={app.verdict} big />
+        <button
+          class:list={['head-save', { saved: inStack }]}
+          data-stack-icon
+          data-slug={app.slug}
+          aria-pressed={inStack ? 'true' : 'false'}
+        >
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M1 1.5H11V13L6 9.8L1 13V1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+          <span class="off">save to my stack</span>
+          <span class="on">in your stack</span>
+        </button>
+      </span>
     </div>
 
+    {
+      discontinued && (
+        <p class="discontinued-note">
+          🪦 {baseName} {discontinued}. The verdict below is now a post-mortem.
+        </p>
+      )
+    }
+
     <div class="stats">
-      <span>price <b>{app.priceMonthly != null ? `$${app.priceMonthly}/mo` : 'varies'}</b></span>
-      {saving != null && <span>you'd save <span class="save">${saving.toLocaleString('en-US')}/yr</span></span>}
+      <span>price <b>{app.priceMonthly != null ? `${discontinued ? 'was ' : ''}$${app.priceMonthly}/mo` : discontinued ? 'gone' : 'varies'}</b></span>
+      {saving != null && !discontinued && <span>you'd save <span class="save">${saving.toLocaleString('en-US')}/yr</span></span>}
       {app.diyTimeEstimate && <span>build time <b>{app.diyTimeEstimate}</b></span>}
-      <span>category <b>{cat.emoji} {cat.label.toLowerCase()}</b></span>
+      <span>category <a class="cat-pill" href={`/category/${app.category}`}>{cat.emoji} {cat.label.toLowerCase()}</a></span>
       <span>replaced by <b data-votes={app.slug}>{votes}</b> people</span>
     </div>
+
+    {
+      VIBE_CODING_TOOL_SLUGS.has(app.slug) && (
+        <p class="bvct-backlink">
+          ⌨️ featured in <a href="/best-vibe-coding-tools">the best vibe coding tools</a>
+        </p>
+      )
+    }
 
     {
       moats.length > 0 && (
@@ -256,6 +321,11 @@ const tweet = encodeURIComponent(
         href={`https://twitter.com/intent/tweet?text=${tweet}`}
         data-share={app.slug}
       >share on X ↗</a>
+      <button
+        class:list={['btn', 'ghost', 'stack-btn', { 'in-stack': inStack }]}
+        data-stack={app.slug}
+        data-saved={inStack ? '1' : null}
+      >{inStack ? '✓ in your stack' : '+ save to my stack'}</button>
       <span class="tweet">"I just replaced {app.name.split(' / ')[0]}{app.priceMonthly != null ? ` ($${app.priceMonthly}/mo)` : ''} with one prompt"</span>
     </div>
 
@@ -302,6 +372,38 @@ const tweet = encodeURIComponent(
       )
     }
 
+    {
+      pricingLed && (
+        <section class="pricing-sec">
+          <span class="microlabel">the numbers</span>
+          <h2>{baseName} pricing</h2>
+          <div class="p-rows">
+            <p class="p-row">
+              <span class="p-k">{app.pricing?.plan ? app.pricing.plan.toLowerCase() : 'paid'}</span>
+              <span class="p-v">
+                ${app.priceMonthly}/mo{app.pricing?.basis ? ` · ${app.pricing.basis}` : ''} · ${saving?.toLocaleString('en-US')}/yr
+              </span>
+            </p>
+            <p class="p-row">
+              <span class="p-k">free tier</span>
+              <span class="p-v">{freeTier}</span>
+            </p>
+          </div>
+          <p class="p-verified">
+            verified {app.pricing?.checkedOn}
+            {app.pricing?.source && (
+              <>
+                {' '}·{' '}
+                <a href={app.pricing.source} rel="nofollow noopener" target="_blank">
+                  source ↗
+                </a>
+              </>
+            )}
+          </p>
+        </section>
+      )
+    }
+
     <section class="faq">
       <span class="microlabel">questions</span>
       {
@@ -327,5 +429,72 @@ const tweet = encodeURIComponent(
 
   .moat-chips .microlabel {
     margin-right: 3px;
+  }
+
+  .bvct-backlink {
+    padding-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .discontinued-note {
+    margin-top: 18px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 76ch;
+  }
+
+  .bvct-backlink a {
+    color: var(--primary);
+  }
+
+  .pricing-sec {
+    padding-top: 44px;
+  }
+
+  .pricing-sec h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding-top: 12px;
+  }
+
+  .p-rows {
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+    max-width: 76ch;
+  }
+
+  .p-row {
+    display: flex;
+    gap: 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .p-k {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex: 0 0 110px;
+    padding-top: 2px;
+  }
+
+  .p-verified {
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .p-verified a {
+    color: var(--muted);
   }
 </style>

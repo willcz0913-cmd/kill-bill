@@ -154,9 +154,13 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: 14px 20px;
   gap: 16px;
-  max-width: 1280px;
+  /* anchors the radio dropdown to the content column's right edge */
+  position: relative;
+  /* Same width and side padding as .wrap: the brand mark sits on the content
+     column's left edge instead of floating off-grid to the left of it. */
+  max-width: 1120px;
   margin: 0 auto;
 }
 
@@ -246,6 +250,345 @@ h3 {
 
 [data-theme='light'] .theme-toggle .sun {
   display: block;
+}
+
+/* ---------- header radio ---------- */
+
+.radio {
+  display: flex;
+}
+
+.radio-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  position: relative;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.radio-btn:hover {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.radio-btn:active {
+  transform: scale(0.92);
+}
+
+.radio.is-on .radio-btn,
+.radio.is-tuning .radio-btn {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.radio-dot {
+  display: none;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.radio.is-on .radio-dot {
+  display: block;
+  animation: radio-pulse 2s ease-in-out infinite;
+}
+
+/* Anchored to the header's content row, not the button: the panel's right
+   edge lines up with the content column on every viewport. */
+.radio-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 20px;
+  width: min(268px, calc(100vw - 24px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 60;
+  font-family: var(--font-mono);
+  text-align: left;
+}
+
+.radio-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.radio-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.radio-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--fg);
+}
+
+.radio-onair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.radio-onair::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.radio.is-on .radio-onair,
+.radio.is-tuning .radio-onair {
+  color: var(--primary);
+}
+
+.radio.is-on .radio-onair::before {
+  animation: radio-pulse 2s ease-in-out infinite;
+}
+
+.radio-tagline {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.radio-transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.radio-play {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.radio-play:hover {
+  border-color: var(--muted);
+}
+
+.radio.is-on .radio-play,
+.radio.is-tuning .radio-play {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.radio-play .r-pause,
+.radio.is-on .radio-play .r-play,
+.radio.is-tuning .radio-play .r-play {
+  display: none;
+}
+
+.radio.is-on .radio-play .r-pause,
+.radio.is-tuning .radio-play .r-pause {
+  display: block;
+}
+
+.radio-now {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.radio-now b {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.radio-now small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.radio-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.radio-eq i {
+  width: 3px;
+  height: 16px;
+  background: var(--primary);
+  opacity: 0.25;
+  transform: scaleY(0.25);
+  transform-origin: bottom;
+}
+
+.radio.is-on .radio-eq i {
+  opacity: 1;
+  animation: radio-eq 1.1s ease-in-out infinite;
+}
+
+.radio.is-on .radio-eq i:nth-child(2) {
+  animation-delay: 0.25s;
+  animation-duration: 0.9s;
+}
+
+.radio.is-on .radio-eq i:nth-child(3) {
+  animation-delay: 0.1s;
+  animation-duration: 1.3s;
+}
+
+.radio.is-on .radio-eq i:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.radio-stations {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.radio-station {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  text-align: left;
+}
+
+.radio-station:hover {
+  background: var(--surface-2);
+}
+
+.radio-station .rs-cursor {
+  width: 10px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: transparent;
+}
+
+.radio-station .rs-name {
+  flex-grow: 1;
+}
+
+.radio-station .rs-genre {
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.radio-station.active {
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+.radio-station.active .rs-cursor,
+.radio-station.active .rs-name {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.radio-vol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.radio-vol span {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.radio-vol input {
+  flex-grow: 1;
+  height: 12px;
+  accent-color: var(--primary);
+}
+
+.radio-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 14px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.radio-foot a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.radio-foot a:hover {
+  color: var(--fg);
+}
+
+@keyframes radio-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes radio-eq {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radio.is-on .radio-eq i {
+    animation: none;
+    transform: scaleY(0.7);
+  }
+
+  .radio.is-on .radio-dot,
+  .radio.is-on .radio-onair::before {
+    animation: none;
+  }
 }
 
 /* ---------- hero ---------- */
@@ -501,6 +844,50 @@ h3 {
 
 .chip:active {
   transform: scale(0.95);
+}
+
+/* ---------- escape-hatch strip (hero, under the chips) ---------- */
+
+.hatch-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: min(1080px, 100%);
+  padding: 13px 18px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--bg));
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg);
+  transition: border-color 0.15s ease;
+}
+
+.hatch-strip:hover {
+  border-color: var(--muted);
+  border-left-color: var(--primary);
+}
+
+.hatch-strip .hs-cta {
+  color: var(--primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hatch-strip:hover .hs-cta {
+  text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .hatch-strip {
+    font-size: 12px;
+    gap: 8px;
+    padding: 11px 14px;
+    text-align: center;
+  }
 }
 
 .chip.active {
@@ -937,11 +1324,31 @@ a.row:hover .badge {
 
 .stats {
   display: flex;
+  align-items: center;
   gap: 32px;
   flex-wrap: wrap;
   padding-top: 20px;
   font-size: 14px;
   color: var(--muted);
+}
+
+/* category as a clickable pill in the stats row, same look as .alt-pill.cat */
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 4px 11px;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--card);
+  transition: border-color 0.15s ease, transform 0.12s var(--ease-snap);
+}
+
+.cat-pill:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .stats b {
@@ -1357,6 +1764,194 @@ a.row:hover .badge {
   }
 }
 
+/* ---------- homepage visitor globe ---------- */
+
+.globe-strip {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.globe-strip .inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 20px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.globe-strip .strip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.globe-strip .strip-note {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.globe-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 380px) 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.globe-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+#globe-canvas {
+  max-width: 100%;
+}
+
+.globe-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.g-count {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.g-num {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.g-lab {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.g-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.g-feed {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.g-feed li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.g-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--primary-dim);
+  flex-shrink: 0;
+}
+
+.g-feed li.fresh .g-dot {
+  background: var(--primary);
+  animation: stat-pulse 2s ease infinite;
+}
+
+.g-line {
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-feed li.fresh .g-line {
+  color: var(--fg);
+}
+
+.g-ago {
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.g-countries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.g-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.g-chip {
+  font-size: 12px;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-2);
+  padding: 5px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.g-more {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .globe-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .globe-wrap {
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .g-feed li:nth-child(4) {
+    display: none;
+  }
+}
+
+/* card-style embed of the globe inside /stats and /sponsor */
+.globe-strip.embedded {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  grid-column: 1 / -1;
+}
+
+.globe-strip.embedded .inner {
+  max-width: none;
+  padding: 18px 20px 22px;
+}
+
+.sponsor-page .globe-strip.embedded {
+  margin-top: 28px;
+}
+
 /* ---------- stats dashboard ---------- */
 
 .dash-tiles {
@@ -1479,6 +2074,65 @@ a.row:hover .badge {
 
 .chart-tip span {
   color: var(--muted);
+}
+
+.dash-sub {
+  padding-top: 26px;
+}
+
+.dash-tiles .tile.span-2 {
+  grid-column: span 2;
+}
+
+.dash-tiles .tile.span-4 {
+  grid-column: 1 / -1;
+}
+
+a.tile {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dash-tiles .tile.cta {
+  border-color: var(--primary-dim);
+  transition: border-color 0.2s ease, transform 0.3s var(--ease-snap);
+}
+
+.dash-tiles .tile.cta:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.dash-tiles .cta-line {
+  font-family: var(--font-display);
+  font-size: clamp(17px, 2.2vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.verdict-bar {
+  display: flex;
+  height: 10px;
+  margin-top: 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.verdict-bar i {
+  display: block;
+}
+
+.dash-line {
+  padding-top: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.dash-line a {
+  color: var(--primary);
 }
 
 .dash-foot {
@@ -2340,13 +2994,20 @@ a.row:hover .badge {
 
 /* ---------- responsive ---------- */
 
-@media (max-width: 760px) {
-  /* The sponsor link stays: it's the one nav item that makes money, and a
-     buyer on a phone otherwise has no way to find the board. */
-  .site-nav a:not(.gh):not([href='/sponsor']) {
+/* The nav's five text links need roughly 960px of header width on one line;
+   below that they wrap and squash the bar, so they bow out earlier than the
+   rest of the mobile layout. The sponsor link stays: it's the one nav item
+   that makes money, and a buyer on a phone otherwise has no way to find the
+   board. */
+@media (max-width: 980px) {
+  /* Account affordances are exempt: sign-in/avatar must survive every width
+     (the chip swap below 760px is handled in the accounts section). */
+  .site-nav a:not(.gh):not([href='/sponsor']):not(.signin):not(.signin-chip):not(.avatar-chip) {
     display: none;
   }
+}
 
+@media (max-width: 760px) {
   /* Everything in one row without horizontal scroll. */
   .site-header .inner {
     padding: 12px 16px;
@@ -2478,6 +3139,19 @@ a.row:hover .badge {
   }
 }
 
+/* Very small phones: tighter gaps keep the single-row header from wrapping.
+   Must come after the 760px block above, which sets the roomier values. */
+@media (max-width: 360px) {
+  .site-header .inner {
+    gap: 8px;
+    padding: 12px 10px;
+  }
+
+  .site-nav {
+    gap: 8px;
+  }
+}
+
 /* ---------- sponsor cards ---------- */
 
 /* An open card is a submit button, not a link — it posts straight to checkout.
@@ -2492,8 +3166,13 @@ button.sp-banner {
   -webkit-appearance: none;
   font: inherit;
   color: inherit;
-  text-align: left;
   cursor: pointer;
+}
+
+/* Buttons default to centered text; the banner variant must match its anchor
+   siblings, which are left-aligned flex rows. Cards center (below). */
+button.sp-banner {
+  text-align: left;
 }
 
 /* Stripe takes a moment to answer. The label swaps in place and the geometry is
@@ -2515,6 +3194,7 @@ button.sp-banner {
 .sp-card {
   display: block;
   width: 200px;
+  text-align: center;
   /* Tall enough for a full 60-character tagline: 172px of inner width at 12px
      mono is ~23 characters a line, and real taglines wrap to four of them.
      Every variant shares this height — a rail whose cards differ looks broken. */
@@ -2615,6 +3295,12 @@ button.sp-banner {
   background: rgba(var(--tint, 51, 230, 103), 0.18);
   animation: sp-breathe 3s ease-in-out infinite;
   animation-delay: calc(var(--i, 0) * 0.4s);
+}
+
+/* Center the logo on the same axis as the name and tagline. Banners keep
+   their left-aligned row layout. */
+.sp-card .sp-icon {
+  margin-inline: auto;
 }
 
 /* Hovering means they're already looking — stop asking for attention. */
@@ -2725,34 +3411,52 @@ button.sp-banner {
   display: none;
 }
 
-@media (min-width: 1280px) and (max-width: 1559px) {
+@media (min-width: 1280px) {
+  /* One set of numbers drives the whole desktop layout. The card starts at
+     200px wide and absorbs the leftover side space up to 392px; the gap
+     between content and card grows gently with the viewport; the content
+     column squeezes only while the minimum card + gap need the room. Above
+     the card cap, all remaining space lands in the gap. */
+  :root {
+    --sp-gap: clamp(12px, calc(100vw * 0.02 - 12px), 56px);
+    --sp-card-w: clamp(200px, calc((100vw - 1120px) / 2 - 16px - var(--sp-gap)), 392px);
+    --sp-side: calc(16px + var(--sp-card-w) + var(--sp-gap));
+  }
+
   main.wrap,
   .sponsor-page {
-    max-width: calc(100vw - 456px);
+    max-width: min(1120px, calc(100vw - var(--sp-side) * 2));
   }
-}
 
-@media (min-width: 1280px) {
+  /* The header column follows the content squeeze so the brand mark stays on
+     the content's left edge while the rails are up, but never drops below the
+     ~960px the nav row needs on one line. Between 1280 and ~1450px the header
+     therefore spreads a little wider than the content column; that space is
+     clear, the rails start at top: 76px, below the header. */
+  .site-header .inner {
+    max-width: min(1120px, max(984px, calc(100vw - var(--sp-side) * 2)));
+  }
+
   /* Full-bleed sections must respect the rails too: the ticker and the hero's
      chip row otherwise run underneath the cards. */
   .ticker {
-    max-width: min(1120px, calc(100vw - 456px));
+    max-width: min(1120px, calc(100vw - var(--sp-side) * 2));
   }
 
   /* The digest card's border and the footer row are visible edges, so unlike
      the ticker they get the same 20px-per-side breathing room the content
      column's padding gives the death list. */
   .digest-card.wrap {
-    max-width: min(1120px, calc(100vw - 496px));
+    max-width: min(1120px, calc(100vw - var(--sp-side) * 2 - 40px));
   }
 
   .site-footer .inner {
-    max-width: min(1280px, calc(100vw - 496px));
+    max-width: min(1280px, calc(100vw - var(--sp-side) * 2 - 40px));
   }
 
   .hero {
-    padding-left: 228px;
-    padding-right: 228px;
+    padding-left: var(--sp-side);
+    padding-right: var(--sp-side);
   }
 
   .sp-rail {
@@ -2763,12 +3467,56 @@ button.sp-banner {
     gap: 10px;
     position: fixed;
     top: 76px;
-    width: 200px;
+    width: var(--sp-card-w);
     z-index: 40;
-    /* 4 cards a side now: on short viewports the rail scrolls instead of
-       clipping the bottom card. */
-    max-height: calc(100vh - 90px);
-    overflow-y: auto;
+    /* The rail owns the full viewport height and the cards divide it (below).
+       Never scrollable: on short viewports the cards compress instead. */
+    height: calc(100vh - 90px);
+    overflow: hidden;
+  }
+
+  /* Cards split the rail's height evenly: zero flex-basis keeps them equal,
+     and min-height 0 lets them compress on short viewports rather than
+     overflow the rail. Content centers on both axes inside the taller card. */
+  .sp-rail .sp-card {
+    width: auto;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* When a card compresses, the tagline gives way first; icon, name and
+     price keep their natural height. */
+  .sp-rail .sp-card > * {
+    flex-shrink: 0;
+  }
+
+  .sp-rail .sp-card .sp-tag {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+
+  /* The sold-out notice compresses with the paid cards (same zero flex
+     basis), it just stops growing sooner: past about double its natural
+     size the paid cards absorb the rest. */
+  .sp-rail .sp-card.soldout {
+    max-height: 128px;
+  }
+
+  /* The open card is a button inside a form; the form is the rail's flex
+     child, so it must pass the granted height and width through, and be
+     allowed to shrink, or its content height would force the rail open. */
+  .sp-rail .sp-checkout-form {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+  }
+
+  .sp-rail .sp-checkout-form .sp-card {
+    flex: 1;
   }
 
   .sp-left {
@@ -3499,4 +4247,404 @@ button.sp-banner {
   .brand .word {
     display: none;
   }
+}
+
+/* ---------- accounts: header, signup modal, my stack ---------- */
+
+/* "sign in" reads a step brighter than the muted nav links: it's the one nav
+   action, not another destination. Below 760px it becomes the person chip
+   (same 26px footprint as the signed-in avatar, so nothing reflows). */
+.site-nav .signin {
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.site-nav .signin-chip {
+  display: none;
+}
+
+.site-nav .avatar-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  background: var(--surface-2);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .site-nav .signin {
+    display: none;
+  }
+  /* Chips size up to match the 34px theme/radio buttons beside them. */
+  .site-nav .signin-chip {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .site-nav .signin-chip svg {
+    width: 14px;
+    height: 14px;
+  }
+  .site-nav .signin-chip:hover {
+    color: var(--fg);
+    border-color: var(--muted);
+  }
+  .site-nav .avatar-chip {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}
+
+.signup-backdrop {
+  position: fixed;
+  inset: 0;
+  /* above the digest bar (90), below the toast (100) so feedback still shows */
+  z-index: 95;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* display:flex above would silently defeat the hidden attribute; without this
+   the invisible backdrop swallows every click on the page. */
+.signup-backdrop[hidden] {
+  display: none;
+}
+
+.signup-card {
+  position: relative;
+  width: min(440px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 36px 36px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.signup-card h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.signup-sub {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.signup-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.oauth-btn:hover {
+  border-color: var(--muted);
+}
+
+.oauth-btn:active {
+  transform: scale(0.98);
+}
+
+.signup-digest {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.signup-digest input {
+  margin-top: 2px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+.signup-digest span {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.signup-fine {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.signup-fine a {
+  color: var(--primary);
+}
+
+.signup-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.signup-close:hover {
+  color: var(--fg);
+}
+
+/* Phone: the modal becomes a bottom sheet. */
+@media (max-width: 560px) {
+  .signup-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .signup-card {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 24px 20px 28px;
+  }
+}
+
+/* Verdict-page save button states. */
+.stack-btn.in-stack {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+/* Armed half of the two-step remove confirm (no browser confirm() anywhere):
+   the label has already changed, this makes it read as destructive. */
+.stack-btn.armed,
+.stack-btn.in-stack.armed {
+  border-color: color-mix(in srgb, #ff4444 45%, transparent);
+  background: color-mix(in srgb, #ff4444 10%, transparent);
+  color: #ff4444;
+}
+
+/* Death-list quick-save lane: fixed 48px slot after the votes column, icon
+   revealed on row hover (always visible when saved; softly visible on touch
+   screens where hover doesn't exist). Hidden on phones where rows collapse
+   into grid cards. */
+.thead .c-save,
+.row .c-save {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.row-save {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.row:hover .row-save,
+.row-save:focus-visible,
+.row-save.saved {
+  opacity: 1;
+}
+
+.row-save:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+.row-save.saved {
+  color: var(--primary);
+}
+
+.row-save.saved svg path {
+  fill: currentColor;
+}
+
+@media (hover: none) {
+  .row-save {
+    opacity: 0.6;
+  }
+}
+
+/* Phone rows are two-line grid cards; the save icon gets its own fourth
+   column spanning both lines, vertically centered, always visible (no hover
+   on touch). Nothing wraps: the track is max-content. */
+@media (max-width: 760px) {
+  .row {
+    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  }
+  .row .c-save {
+    grid-column: 4;
+    grid-row: 1 / 3;
+    width: auto;
+    align-self: center;
+  }
+  .row .row-save {
+    opacity: 1;
+  }
+  /* Verdict chip centers across both card lines, level with the bookmark,
+     instead of riding high on the name line. Price stops spanning into the
+     chip's column so nothing overlaps. */
+  .row .c-verdict {
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+  .row .c-price {
+    grid-column: 2 / 3;
+  }
+}
+
+/* The signup modal fades and lifts in; the phone sheet slides up. Backdrop
+   and card animate together, both directions. */
+.signup-backdrop {
+  opacity: 0;
+  transition: opacity 0.18s var(--ease-out);
+}
+
+.signup-backdrop.open {
+  opacity: 1;
+}
+
+.signup-card {
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition: transform 0.22s var(--ease-out), opacity 0.18s var(--ease-out);
+}
+
+.signup-backdrop.open .signup-card {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 560px) {
+  .signup-card {
+    transform: translateY(28px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup-backdrop,
+  .signup-card {
+    transition: none;
+  }
+}
+
+/* Header avatar: unmistakable hover feedback (it is a link to /account). */
+.site-nav .avatar-chip {
+  transition: transform 0.12s var(--ease-snap), box-shadow 0.15s ease;
+}
+
+.site-nav .avatar-chip:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.site-nav .avatar-chip:active {
+  transform: scale(0.95);
+}
+
+/* Verdict-page head: badge with the save chip tucked under it. */
+.verdict-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.head-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease,
+    transform 0.12s var(--ease-snap);
+}
+
+.head-save:hover {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.head-save:active {
+  transform: scale(0.95);
+}
+
+.head-save.saved {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.head-save.saved svg path {
+  fill: currentColor;
+}
+
+.head-save .on,
+.head-save.saved .off {
+  display: none;
+}
+
+.head-save.saved .on {
+  display: inline;
 }

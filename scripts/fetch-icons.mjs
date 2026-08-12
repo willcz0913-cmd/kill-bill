@@ -3,8 +3,9 @@
    /favicon.ico. Flags tiny/placeholder results so they can be hunted manually. */
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appsDir = path.join(root, 'data/apps');
 const iconsDir = path.join(root, 'public/icons');
 const force = process.argv.includes('--force');

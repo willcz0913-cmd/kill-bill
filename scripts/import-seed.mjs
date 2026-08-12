@@ -4,9 +4,10 @@
    Also snapshots the full seed into the `apps_seed` table of the runtime DB. */
 import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appsDir = path.join(root, 'data/apps');
 const seed = JSON.parse(readFileSync(path.join(root, 'scripts/seed-apps.json'), 'utf8'));
 

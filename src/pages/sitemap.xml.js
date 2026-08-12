@@ -3,7 +3,7 @@ import { allApps, alternativesSitemapApps, categoriesInUse, moatsInUse } from '.
 export async function GET() {
   const base = 'https://kill-bill.app';
   // Staged rollout — swap to appsWithAlternativesPage() ~6-8 weeks after launch
-  // (see planning/16-alternatives/progress.md TODO, dated).
+  // so every alternatives page ends up in the sitemap.
   const altPages = alternativesSitemapApps();
   const urls = [
     `${base}/`,
@@ -15,6 +15,7 @@ export async function GET() {
     ...moatsInUse().map((m) => `${base}/moat/${m.tag}`),
     `${base}/moats`,
     `${base}/stats`,
+    `${base}/best-vibe-coding-tools`,
     `${base}/vibecode-this-site`,
   ];
 

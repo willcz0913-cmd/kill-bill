@@ -12,9 +12,10 @@
     "unit": "per-seat",
     "native": "14 USD",
     "source": "https://www.granola.ai/pricing",
-    "checkedOn": "2026-07-30",
+    "checkedOn": "2026-08-07",
     "confidence": "high",
-    "notes": "Official page checked 2026-07-30 showed Business at $14/user/month and Enterprise from $35/user/month; older Individual $18 references may be stale."
+    "notes": "Official page checked 2026-07-30 showed Business at $14/user/month and Enterprise from $35/user/month; older Individual $18 references may be stale.",
+    "freeTier": "The free Basic plan includes AI notes but only limited meeting history."
   },
   "verdict": "yes",
   "verdictConfidence": "medium",
@@ -39,11 +40,6 @@
   "moatNotes": "polish/sync/collaboration",
   "whyPeopleStillPay": "They pay because it is always on, nicely integrated with calendar/work calls, and trustworthy enough not to lose meeting history.",
   "priorArt": [
-    {
-      "name": "quill",
-      "url": "https://github.com/dremnik/quill",
-      "desc": "open-source Granola alternative"
-    },
     {
       "name": "whisper.cpp",
       "url": "https://github.com/ggml-org/whisper.cpp",

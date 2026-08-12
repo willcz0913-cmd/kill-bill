@@ -70,6 +70,75 @@ const SCHEMA_SQLITE = `
     count INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (slot_id, day)
   );
+  CREATE TABLE IF NOT EXISTS searches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query TEXT NOT NULL,
+    hits INTEGER NOT NULL DEFAULT 0,
+    country TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  /* Better Auth tables, exactly as \`npx auth generate\` emits them for the
+     kysely/sqlite adapter (camelCase quoted columns are the adapter's own
+     naming, do not snake_case them). Plus our stack table. */
+  CREATE TABLE IF NOT EXISTS "user" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL UNIQUE,
+    "emailVerified" INTEGER NOT NULL,
+    "image" TEXT,
+    "createdAt" DATE NOT NULL,
+    "updatedAt" DATE NOT NULL,
+    "newsletter" INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS "session" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "expiresAt" DATE NOT NULL,
+    "token" TEXT NOT NULL UNIQUE,
+    "createdAt" DATE NOT NULL,
+    "updatedAt" DATE NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS "session_userId_idx" ON "session" ("userId");
+  CREATE TABLE IF NOT EXISTS "account" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" DATE,
+    "refreshTokenExpiresAt" DATE,
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" DATE NOT NULL,
+    "updatedAt" DATE NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS "account_userId_idx" ON "account" ("userId");
+  CREATE TABLE IF NOT EXISTS "verification" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" DATE NOT NULL,
+    "createdAt" DATE NOT NULL,
+    "updatedAt" DATE NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS "verification_identifier_idx" ON "verification" ("identifier");
+  CREATE TABLE IF NOT EXISTS "rateLimit" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "key" TEXT NOT NULL UNIQUE,
+    "count" INTEGER NOT NULL,
+    "lastRequest" BIGINT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS stack (
+    user_id TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    app_slug TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, app_slug)
+  );
 `;
 
 const SCHEMA_PG = `
@@ -137,6 +206,75 @@ const SCHEMA_PG = `
     count INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (slot_id, day)
   );
+  CREATE TABLE IF NOT EXISTS searches (
+    id SERIAL PRIMARY KEY,
+    query TEXT NOT NULL,
+    hits INTEGER NOT NULL DEFAULT 0,
+    country TEXT,
+    created_at BIGINT NOT NULL
+  );
+
+  /* Better Auth tables (kysely/postgres dialect: text / boolean / timestamptz,
+     camelCase quoted columns are the adapter's own naming, do not snake_case
+     them). Plus our stack table. */
+  CREATE TABLE IF NOT EXISTS "user" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL UNIQUE,
+    "emailVerified" BOOLEAN NOT NULL,
+    "image" TEXT,
+    "createdAt" TIMESTAMPTZ NOT NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL,
+    "newsletter" BOOLEAN NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS "session" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "expiresAt" TIMESTAMPTZ NOT NULL,
+    "token" TEXT NOT NULL UNIQUE,
+    "createdAt" TIMESTAMPTZ NOT NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS "session_userId_idx" ON "session" ("userId");
+  CREATE TABLE IF NOT EXISTS "account" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMPTZ,
+    "refreshTokenExpiresAt" TIMESTAMPTZ,
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" TIMESTAMPTZ NOT NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS "account_userId_idx" ON "account" ("userId");
+  CREATE TABLE IF NOT EXISTS "verification" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "identifier" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "expiresAt" TIMESTAMPTZ NOT NULL,
+    "createdAt" TIMESTAMPTZ NOT NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS "verification_identifier_idx" ON "verification" ("identifier");
+  CREATE TABLE IF NOT EXISTS "rateLimit" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "key" TEXT NOT NULL UNIQUE,
+    "count" INTEGER NOT NULL,
+    "lastRequest" BIGINT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS stack (
+    user_id TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    app_slug TEXT NOT NULL,
+    created_at BIGINT NOT NULL,
+    PRIMARY KEY (user_id, app_slug)
+  );
 `;
 
 /* Six fixed slots, three per rail side. Seed prices only — editable at runtime. */
@@ -202,9 +340,41 @@ function lookupCol(column) {
 
 let driver;
 
+/* Raw connection handles, shared between the query driver below and Better
+   Auth (which wants the pg Pool / better-sqlite3 Database instance itself).
+   One pool, one sqlite handle, never two connections to the same store. */
+let pgPool;
+async function rawPgPool() {
+  if (!pgPool) {
+    const { default: pg } = await import('pg');
+    pgPool = new pg.Pool({ connectionString: PG_URL, max: 5 });
+  }
+  return pgPool;
+}
+
+let sqliteDb;
+async function rawSqliteDb() {
+  if (!sqliteDb) {
+    const { default: Database } = await import('better-sqlite3');
+    const { mkdirSync } = await import('node:fs');
+    const path = await import('node:path');
+    const dir = process.env.DATA_DIR || 'data/private';
+    mkdirSync(dir, { recursive: true });
+    sqliteDb = new Database(path.join(dir, 'site.db'));
+    sqliteDb.pragma('journal_mode = WAL');
+  }
+  return sqliteDb;
+}
+
+/* For Better Auth: the raw handle, guaranteed post-schema (getDriver applies
+   the schema, including the auth tables). */
+export async function authDatabase() {
+  await getDriver();
+  return PG_URL ? rawPgPool() : rawSqliteDb();
+}
+
 async function pgDriver() {
-  const { default: pg } = await import('pg');
-  const pool = new pg.Pool({ connectionString: PG_URL, max: 5 });
+  const pool = await rawPgPool();
   await pool.query(SCHEMA_PG);
   // A NULL source means the row predates per-placement tracking: scanner era.
   await pool.query('ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS source TEXT');
@@ -251,6 +421,13 @@ async function pgDriver() {
     },
     async clearRateLimit(key) {
       await pool.query('DELETE FROM rate_limits WHERE key = $1', [key]);
+    },
+    // Non-mutating: is there a live rate-limit key inside its window? Used to
+    // prove an unvote is undoing a real prior vote from this same client.
+    async rateLimitActive(key, windowMs) {
+      const r = await pool.query('SELECT window_start FROM rate_limits WHERE key = $1', [key]);
+      const row = r.rows[0];
+      return !!row && Date.now() - Number(row.window_start) <= windowMs;
     },
     async addEmail(email, source) {
       const r = await pool.query(
@@ -372,17 +549,63 @@ async function pgDriver() {
       );
       return r.rows.map((x) => ({ ...x, count: Number(x.count) }));
     },
+    async addSearch(query, hits, country, ts) {
+      await pool.query(
+        'INSERT INTO searches (query, hits, country, created_at) VALUES ($1, $2, $3, $4)',
+        [query, hits, country, ts]
+      );
+    },
+    async searchRows(afterId, limit) {
+      const r = await pool.query(
+        'SELECT id, query, hits, country, created_at FROM searches WHERE id > $1 ORDER BY id LIMIT $2',
+        [afterId, limit]
+      );
+      return r.rows.map((x) => ({ ...x, id: Number(x.id), created_at: Number(x.created_at) }));
+    },
+    async stackAdd(userId, slug) {
+      const r = await pool.query(
+        'INSERT INTO stack (user_id, app_slug, created_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+        [userId, slug, Date.now()]
+      );
+      return r.rowCount > 0;
+    },
+    async stackRemove(userId, slug) {
+      const r = await pool.query('DELETE FROM stack WHERE user_id = $1 AND app_slug = $2', [userId, slug]);
+      return r.rowCount > 0;
+    },
+    async stackSlugs(userId) {
+      const r = await pool.query(
+        'SELECT app_slug FROM stack WHERE user_id = $1 ORDER BY created_at DESC, app_slug',
+        [userId]
+      );
+      return r.rows.map((x) => x.app_slug);
+    },
+    async stackClear(userId) {
+      await pool.query('DELETE FROM stack WHERE user_id = $1', [userId]);
+    },
+    async setUserNewsletter(userId, on) {
+      await pool.query('UPDATE "user" SET "newsletter" = $2 WHERE "id" = $1', [userId, on]);
+    },
+    async removeFromWaitlist(email) {
+      await pool.query('DELETE FROM waitlist WHERE email = $1', [email]);
+    },
+    async sponsorTotals() {
+      const [imp, clk] = await Promise.all([
+        pool.query('SELECT COALESCE(SUM(count), 0) AS n, MIN(day) AS since FROM sponsor_impressions'),
+        pool.query('SELECT COUNT(*) AS n, MIN(created_at) AS since FROM sponsor_clicks'),
+      ]);
+      return {
+        impressions: Number(imp.rows[0].n),
+        impressionsSince: imp.rows[0].since ?? null,
+        clicks: Number(clk.rows[0].n),
+        clicksSince: clk.rows[0].since == null ? null : Number(clk.rows[0].since),
+      };
+    },
   };
 }
 
 async function sqliteDriver() {
-  const { default: Database } = await import('better-sqlite3');
-  const { mkdirSync } = await import('node:fs');
-  const path = await import('node:path');
-  const dir = process.env.DATA_DIR || 'data/private';
-  mkdirSync(dir, { recursive: true });
-  const db = new Database(path.join(dir, 'site.db'));
-  db.pragma('journal_mode = WAL');
+  const db = await rawSqliteDb();
   db.exec(SCHEMA_SQLITE);
   // A NULL source means the row predates per-placement tracking: scanner era.
   try {
@@ -450,6 +673,12 @@ async function sqliteDriver() {
     },
     async clearRateLimit(key) {
       db.prepare('DELETE FROM rate_limits WHERE key = ?').run(key);
+    },
+    // Non-mutating: is there a live rate-limit key inside its window? Used to
+    // prove an unvote is undoing a real prior vote from this same client.
+    async rateLimitActive(key, windowMs) {
+      const row = stmts.getLimit.get(key);
+      return !!row && Date.now() - row.window_start <= windowMs;
     },
     async addEmail(email, source) {
       return stmts.addEmail.run(email, source).changes > 0;
@@ -541,11 +770,67 @@ async function sqliteDriver() {
         .prepare('SELECT slot_id, day, count FROM sponsor_impressions WHERE day >= ? ORDER BY day')
         .all(sinceDay);
     },
+    async addSearch(query, hits, country, ts) {
+      db.prepare(
+        'INSERT INTO searches (query, hits, country, created_at) VALUES (?, ?, ?, ?)'
+      ).run(query, hits, country, ts);
+    },
+    async searchRows(afterId, limit) {
+      return db
+        .prepare(
+          'SELECT id, query, hits, country, created_at FROM searches WHERE id > ? ORDER BY id LIMIT ?'
+        )
+        .all(afterId, limit);
+    },
+    async stackAdd(userId, slug) {
+      return db
+        .prepare('INSERT OR IGNORE INTO stack (user_id, app_slug, created_at) VALUES (?, ?, ?)')
+        .run(userId, slug, Date.now()).changes > 0;
+    },
+    async stackRemove(userId, slug) {
+      return db.prepare('DELETE FROM stack WHERE user_id = ? AND app_slug = ?').run(userId, slug).changes > 0;
+    },
+    async stackSlugs(userId) {
+      return db
+        .prepare('SELECT app_slug FROM stack WHERE user_id = ? ORDER BY created_at DESC, app_slug')
+        .all(userId)
+        .map((x) => x.app_slug);
+    },
+    async stackClear(userId) {
+      db.prepare('DELETE FROM stack WHERE user_id = ?').run(userId);
+    },
+    async setUserNewsletter(userId, on) {
+      db.prepare('UPDATE "user" SET "newsletter" = ? WHERE "id" = ?').run(on ? 1 : 0, userId);
+    },
+    async removeFromWaitlist(email) {
+      db.prepare('DELETE FROM waitlist WHERE email = ?').run(email);
+    },
+    async sponsorTotals() {
+      const imp = db
+        .prepare('SELECT COALESCE(SUM(count), 0) AS n, MIN(day) AS since FROM sponsor_impressions')
+        .get();
+      const clk = db
+        .prepare('SELECT COUNT(*) AS n, MIN(created_at) AS since FROM sponsor_clicks')
+        .get();
+      return {
+        impressions: Number(imp.n),
+        impressionsSince: imp.since ?? null,
+        clicks: Number(clk.n),
+        clicksSince: clk.since == null ? null : Number(clk.since),
+      };
+    },
   };
 }
 
 async function getDriver() {
-  if (!driver) driver = PG_URL ? pgDriver() : sqliteDriver();
+  // A rejected init must not be cached: clear it so the next request retries
+  // (a Postgres blip would otherwise take the DB layer down until restart).
+  if (!driver) {
+    driver = (PG_URL ? pgDriver() : sqliteDriver()).catch((err) => {
+      driver = null;
+      throw err;
+    });
+  }
   return driver;
 }
 
@@ -581,6 +866,10 @@ export async function addSponsorInquiry(email, message) {
 
 export async function rateLimit(key, max, windowMs) {
   return (await getDriver()).rateLimit(key, max, windowMs);
+}
+
+export async function rateLimitActive(key, windowMs) {
+  return (await getDriver()).rateLimitActive(key, windowMs);
 }
 
 export async function sponsorSlots() {
@@ -642,8 +931,55 @@ export async function impressionRows(sinceDay = '0000-00-00') {
   return (await getDriver()).impressionRows(sinceDay);
 }
 
+// All-time aggregates across every slot: the public /stats page shows only
+// these sums, never per-slot numbers. Cached briefly: the page renders per
+// request and two table scans per pageview would be pure waste.
+let totalsCache = { at: 0, data: null };
+export async function sponsorTotals() {
+  const now = Date.now();
+  if (now - totalsCache.at < 60_000) return totalsCache.data;
+  totalsCache = { at: now, data: await (await getDriver()).sponsorTotals() };
+  return totalsCache.data;
+}
+
+export async function addSearch(query, hits, country, ts = Date.now()) {
+  return (await getDriver()).addSearch(query, hits, country, ts);
+}
+
+// Incremental export for the off-site audit log: rows strictly after `afterId`,
+// oldest first, so the puller can resume from the last id it has seen.
+export async function searchRows(afterId = 0, limit = 5000) {
+  return (await getDriver()).searchRows(afterId, limit);
+}
+
 export async function purchasesForAdmin(limit = 60) {
   return (await getDriver()).purchasesForAdmin(limit);
+}
+
+export async function stackAdd(userId, slug) {
+  return (await getDriver()).stackAdd(userId, slug);
+}
+
+export async function stackRemove(userId, slug) {
+  return (await getDriver()).stackRemove(userId, slug);
+}
+
+export async function stackSlugs(userId) {
+  return (await getDriver()).stackSlugs(userId);
+}
+
+// GDPR delete-account cascade. SQLite doesn't enforce FKs by default, so this
+// is the delete path on both drivers rather than trusting ON DELETE CASCADE.
+export async function stackClear(userId) {
+  return (await getDriver()).stackClear(userId);
+}
+
+export async function setUserNewsletter(userId, on) {
+  return (await getDriver()).setUserNewsletter(userId, on);
+}
+
+export async function removeFromWaitlist(email) {
+  return (await getDriver()).removeFromWaitlist(email);
 }
 
 // The headline number: total monthly cost of every subscription on the death list.
