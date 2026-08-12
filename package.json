@@ -1,7 +1,7 @@
 {
-  "name": "canivibecodeit",
+  "name": "kill-bill",
   "version": "1.0.0",
-  "description": "Can I Vibecode It? — find out which subscriptions are one prompt away from free.",
+  "description": "Killbill - find out which subscriptions you can vibecode away for free.",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -21,7 +21,7 @@
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
     "astro": "^7.1.6",
-    "better-sqlite3": "^13.0.2",
+    "better-sqlite3": "^11.10.0",
     "pg": "^8.22.0",
     "satori": "^0.29.0",
     "sharp": "^0.35.3"

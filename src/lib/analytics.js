@@ -15,11 +15,11 @@ const QUERY = `
     (SELECT max(pv) FROM (
       SELECT toDate(timestamp) AS d, countIf(event = '$pageview') AS pv
       FROM events
-      WHERE properties.$host = 'canivibecodeit.com'
+      WHERE properties.$host = 'kill-bill.app'
       GROUP BY d
     )) AS best_day
   FROM events
-  WHERE properties.$host = 'canivibecodeit.com'
+  WHERE properties.$host = 'kill-bill.app'
     AND timestamp > now() - INTERVAL 7 DAY
 `;
 
@@ -34,7 +34,7 @@ async function hogql(query) {
   return (await res.json()).results;
 }
 
-const SITE = `properties.$host = 'canivibecodeit.com'`;
+const SITE = `properties.$host = 'kill-bill.app'`;
 
 let dashCache = { at: 0, data: null };
 

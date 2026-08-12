@@ -1,7 +1,7 @@
 import { allApps, alternativesSitemapApps, categoriesInUse, moatsInUse } from '../lib/apps.js';
 
 export async function GET() {
-  const base = 'https://canivibecodeit.com';
+  const base = 'https://kill-bill.app';
   // Staged rollout — swap to appsWithAlternativesPage() ~6-8 weeks after launch
   // (see planning/16-alternatives/progress.md TODO, dated).
   const altPages = alternativesSitemapApps();

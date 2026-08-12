@@ -16,7 +16,7 @@ const apps = allApps().sort(
 );
 const cats = topCategories();
 
-const title = 'Can I Vibecode It? · Which subscriptions are one prompt away from free';
+const title = 'Killbill · Which subscriptions are one prompt away from free';
 const description =
   'The leaderboard of SaaS apps you can replace with one AI prompt. Honest verdicts, the exact prompt to run, and what you lose by leaving.';
 
@@ -24,13 +24,13 @@ const jsonld = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Can I Vibecode It?',
-    url: 'https://canivibecodeit.com',
+    name: 'Killbill',
+    url: 'https://kill-bill.app',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://canivibecodeit.com/?q={search_term_string}',
+        urlTemplate: 'https://kill-bill.app/?q={search_term_string}',
       },
       'query-input': 'required name=search_term_string',
     },
@@ -43,7 +43,7 @@ const jsonld = [
       '@type': 'ListItem',
       position: i + 1,
       name: a.name,
-      url: `https://canivibecodeit.com/${a.slug}`,
+      url: `https://kill-bill.app/${a.slug}`,
     })),
   },
 ];
@@ -51,10 +51,10 @@ const jsonld = [
 
 <Base {title} {description} {jsonld}>
   <section class="hero">
-    <h1>Can I vibecode <span class="blank">___</span>?</h1>
+    <h1>Kill your <span class="blank">___</span> subscription.</h1>
     <p class="sub">
-      {apps.length} apps. One question each: can AI build you a replacement today, or is it
-      still worth paying for?
+      {apps.length} names on the list. See what people already built to replace them: the
+      repo, the receipt, and proof it beats what you're paying for. Then cross yours off.
     </p>
     <div class="search-wrap">
       <div class="search">

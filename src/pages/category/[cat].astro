@@ -14,7 +14,7 @@ const apps = appsByCategory(cat).sort((a, b) => votes(b.slug) - votes(a.slug));
 if (apps.length === 0) return new Response(null, { status: 404 });
 
 const cats = categoriesInUse();
-const title = `Vibecode your ${meta.label.toLowerCase()} subscription · Can I Vibecode It?`;
+const title = `Vibecode your ${meta.label.toLowerCase()} subscription · Killbill`;
 const description = `${meta.label} apps ranked by how replaceable they are with one AI prompt: ${apps
   .map((a) => a.name)
   .join(', ')}.`;
@@ -24,9 +24,9 @@ const jsonld = [
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'The Death List', item: 'https://canivibecodeit.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Categories', item: 'https://canivibecodeit.com/categories' },
-      { '@type': 'ListItem', position: 3, name: meta.label, item: `https://canivibecodeit.com/category/${cat}` },
+      { '@type': 'ListItem', position: 1, name: 'The Death List', item: 'https://kill-bill.app/' },
+      { '@type': 'ListItem', position: 2, name: 'Categories', item: 'https://kill-bill.app/categories' },
+      { '@type': 'ListItem', position: 3, name: meta.label, item: `https://kill-bill.app/category/${cat}` },
     ],
   },
   {
@@ -37,7 +37,7 @@ const jsonld = [
       '@type': 'ListItem',
       position: i + 1,
       name: a.name,
-      url: `https://canivibecodeit.com/${a.slug}`,
+      url: `https://kill-bill.app/${a.slug}`,
     })),
   },
 ];

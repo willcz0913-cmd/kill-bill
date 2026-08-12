@@ -73,9 +73,9 @@ export async function createCheckoutSession({
           currency: 'usd',
           unit_amount: priceCents,
           product_data: {
-            name: `canivibecodeit.com · sponsor slot (${30 * months} days)`,
+            name: `kill-bill.app · sponsor slot (${30 * months} days)`,
             description:
-              `Your product on every page of canivibecodeit.com for ${30 * months} days: icon, name,`
+              `Your product on every page of kill-bill.app for ${30 * months} days: icon, name,`
               + ' tagline and link, plus the sponsor board.'
               + (months > 1 ? ' Price locked for the full run.' : '')
               + (termNote ? ` ${termNote}` : ''),

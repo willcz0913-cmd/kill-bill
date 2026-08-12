@@ -2519,12 +2519,64 @@ button.sp-banner {
      mono is ~23 characters a line, and real taglines wrap to four of them.
      Every variant shares this height — a rail whose cards differ looks broken. */
   height: 160px;
-  padding: 14px;
-  border-radius: 6px;
+  padding: 15px 15px 14px;
+  border-radius: 10px;
   overflow: hidden;
   background: rgba(var(--tint, 51, 230, 103), 0.1);
   border: 1px solid rgba(var(--tint, 51, 230, 103), 0.35);
   transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+/* An open slot has no brand to show, so instead of a sparse top-aligned stack
+   it becomes a centered "advertise here" card: a prominent tile, a clear
+   headline, the price, and the CTA — vertically centered so it fills the box
+   with intent instead of dead space. */
+.sp-card.open,
+.sp-card.reserved {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 7px;
+}
+
+/* Restrained, not loud: a neutral surface with a solid hairline border. An empty
+   rail should recede and frame the content, so the green is reserved for a single
+   accent (the price + the tile glyph), not the whole card. */
+.sp-card.open {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.sp-card.open:hover {
+  border-color: var(--muted);
+  background: var(--surface-2);
+}
+
+/* The tile that stands in for a live card's logo — large enough to anchor the
+   card the way a real icon would, but neutral so it doesn't shout. */
+.sp-icon-slot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 26px;
+  line-height: 1;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.12s var(--ease-snap);
+}
+
+.sp-card.open .sp-icon-slot {
+  color: var(--primary);
+}
+
+.sp-card.open:hover .sp-icon-slot {
+  border-color: var(--muted);
+  transform: scale(1.05);
 }
 
 .sp-card:hover {
@@ -2635,11 +2687,41 @@ button.sp-banner {
   color: var(--fg);
 }
 
+/* Centered layout: the flex gap owns the spacing, so the per-element top padding
+   the live card needs is reset here. The price is the card's headline. */
+.sp-card.open .sp-label,
+.sp-card.reserved .sp-label {
+  padding-top: 2px;
+}
+
+.sp-card.open .sp-price {
+  padding-top: 0;
+  font-size: 22px;
+}
+
+.sp-card.open .sp-cta,
+.sp-card.reserved .sp-cta {
+  padding-top: 4px;
+}
+
+.sp-card.open .sp-cta,
+.sp-card.reserved .sp-cta {
+  color: var(--muted);
+}
+
 /* ---------- sponsor rails ---------- */
 
 /* Rails need room beside the 1120px column; narrower viewports use the
    top/bottom tapes instead. */
 .sp-rail {
+  display: none;
+  /* The rail can outrun a short viewport, but a nested scrollbar reads as
+     broken next to the clean page. Hide the chrome; wheel/trackpad still
+     reaches a clipped bottom card, and every slot is counted at render time. */
+  scrollbar-width: none;
+}
+
+.sp-rail::-webkit-scrollbar {
   display: none;
 }
 

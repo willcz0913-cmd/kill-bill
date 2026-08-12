@@ -1,6 +1,6 @@
-# Can I Vibecode It?
+# Killbill
 
-**[canivibecodeit.com](https://canivibecodeit.com)** — find out which subscriptions are one
+**[kill-bill.app](https://kill-bill.app)** — find out which subscriptions are one
 prompt away from free.
 
 For each paid SaaS app: an honest verdict on whether an AI coding agent (Claude Code,
@@ -11,7 +11,7 @@ as important — what you lose by leaving. Think caniuse.com, but for killing yo
 - 🟡 **KINDA** — buildable in a weekend, real gaps remain
 - 🔴 **NOT REALLY** — the value is the network, the data, or the infra. Some things survive.
 
-Yes, [you can vibecode this site too](https://canivibecodeit.com/vibecode-this-site).
+Yes, [you can vibecode this site too](https://kill-bill.app/vibecode-this-site).
 
 ## Add an app
 

@@ -254,7 +254,7 @@ export function withUtm(raw) {
   for (const key of u.searchParams.keys()) {
     if (key.toLowerCase().startsWith('utm_')) return u.href;
   }
-  u.searchParams.set('utm_source', 'canivibecodeit');
+  u.searchParams.set('utm_source', 'killbill');
   u.searchParams.set('utm_medium', 'referral');
   u.searchParams.set('utm_campaign', 'sponsor_card');
   return u.href;
@@ -270,7 +270,7 @@ export function faviconUrl(raw) {
 }
 
 export function siteUrl(pathname = '/') {
-  const base = (process.env.SITE_URL || 'https://canivibecodeit.com').replace(/\/+$/, '');
+  const base = (process.env.SITE_URL || 'https://kill-bill.app').replace(/\/+$/, '');
   return `${base}${pathname}`;
 }
 

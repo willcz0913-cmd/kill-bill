@@ -4,8 +4,8 @@
    script is a standalone cron job with its own env loading and must keep
    running untouched by anything the site does. */
 
-const FROM = 'Rob at canivibecodeit <digest@send.canivibecodeit.com>';
-const REPLY_TO = 'digest@canivibecodeit.com';
+const FROM = 'Killbill <digest@send.kill-bill.app>';
+const REPLY_TO = 'digest@kill-bill.app';
 
 export function esc(s) {
   return String(s ?? '')

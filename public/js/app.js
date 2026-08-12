@@ -1,4 +1,4 @@
-/* Can I Vibecode It? — interactions. No frameworks, on purpose. */
+/* Killbill — interactions. No frameworks, on purpose. */
 (() => {
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];

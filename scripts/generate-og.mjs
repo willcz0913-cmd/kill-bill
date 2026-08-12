@@ -6,8 +6,9 @@ import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = path.join(root, 'public/og');
 mkdirSync(outDir, { recursive: true });
 
@@ -90,14 +91,12 @@ const logoRow = el(
       width: 44, height: 44, border: `4px solid ${COLORS.green}`, borderRadius: 10,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
     }, [
-      el('div', { ...mono(22, COLORS.green, 700), lineHeight: 1 }, '?'),
+      el('div', { ...mono(22, COLORS.green, 700), lineHeight: 1 }, '×'),
       el('div', { width: 7, height: 18, backgroundColor: COLORS.green }),
     ]),
     el('div', { display: 'flex', ...mono(26, COLORS.fg) }, [
-      el('span', { color: COLORS.fg }, 'can'),
-      el('span', { color: COLORS.green }, 'i'),
-      el('span', { color: COLORS.fg }, 'vibecode'),
-      el('span', { color: COLORS.green }, 'it'),
+      el('span', { color: COLORS.fg }, 'kill'),
+      el('span', { color: COLORS.green }, 'bill'),
     ]),
   ]
 );
@@ -122,7 +121,7 @@ function appCard(app) {
         el('div', {
           fontFamily: 'Space Grotesk', fontSize: 74, fontWeight: 700,
           color: COLORS.fg, letterSpacing: '-0.02em',
-        }, `Can I vibecode ${shortName}?`),
+        }, `Kill ${shortName}.`),
       ]),
       el('div', { display: 'flex', alignItems: 'center', gap: 22 }, [
         el('div', {
@@ -139,7 +138,7 @@ function appCard(app) {
       ]),
     ]),
     el('div', { display: 'flex', marginTop: 'auto', justifyContent: 'space-between' }, [
-      el('div', mono(22, COLORS.muted), `canivibecodeit.com/${app.slug}`),
+      el('div', mono(22, COLORS.muted), `kill-bill.app/${app.slug}`),
       el('div', mono(22, COLORS.muted), 'the exact prompt inside →'),
     ]),
   ]);
@@ -150,10 +149,10 @@ function homeCard(mrr) {
     logoRow,
     el('div', { display: 'flex', flexDirection: 'column', gap: 30, marginTop: 56 }, [
       el('div', {
-        fontFamily: 'Space Grotesk', fontSize: 84, fontWeight: 700,
+        fontFamily: 'Space Grotesk', fontSize: 78, fontWeight: 700,
         color: COLORS.fg, letterSpacing: '-0.02em', lineHeight: 1.05,
-      }, 'Can I vibecode ___?'),
-      el('div', mono(30, COLORS.muted), 'Which subscriptions are one prompt away from free.'),
+      }, 'Kill your ___ subscription.'),
+      el('div', mono(30, COLORS.muted), 'See what people built to replace it. The repo, the receipt, the proof.'),
       el('div', { display: 'flex', alignItems: 'center', gap: 18, marginTop: 18 }, [
         el('div', { ...mono(26, '#ff8a5c', 700), letterSpacing: '0.08em' }, 'COLLECTIVE MRR DESTROYED'),
         el('div', {
@@ -163,7 +162,7 @@ function homeCard(mrr) {
       ]),
     ]),
     el('div', { display: 'flex', marginTop: 'auto', justifyContent: 'space-between' }, [
-      el('div', mono(22, COLORS.muted), 'canivibecodeit.com'),
+      el('div', mono(22, COLORS.muted), 'kill-bill.app'),
       el('div', mono(22, COLORS.muted), 'the death list →'),
     ]),
   ]);
@@ -207,7 +206,7 @@ function siteCard() {
       el('div', {
         fontFamily: 'Space Grotesk', fontSize: 76, fontWeight: 700,
         color: COLORS.fg, letterSpacing: '-0.02em', lineHeight: 1.05,
-      }, 'Can I vibecode canivibecodeit.com?'),
+      }, 'Can I vibecode kill-bill.app?'),
       el('div', { display: 'flex', alignItems: 'center', gap: 22 }, [
         el('div', {
           ...mono(30, COLORS.onGreen, 700), backgroundColor: COLORS.green,
@@ -217,7 +216,7 @@ function siteCard() {
       ]),
     ]),
     el('div', { display: 'flex', marginTop: 'auto', justifyContent: 'space-between' }, [
-      el('div', mono(22, COLORS.muted), 'canivibecodeit.com/vibecode-this-site'),
+      el('div', mono(22, COLORS.muted), 'kill-bill.app/vibecode-this-site'),
       el('div', mono(22, COLORS.muted), 'the rebuild prompt inside →'),
     ]),
   ]);
@@ -240,7 +239,7 @@ if (range) {
   await renderCached(siteCard(), 'vibecode-this-site.png', 'site', cache);
   saveCache(cache);
   const { spawnSync } = await import('node:child_process');
-  const self = new URL(import.meta.url).pathname;
+  const self = fileURLToPath(import.meta.url);
   const CHUNK = 100;
   for (let i = 0; i < apps.length; i += CHUNK) {
     const r = spawnSync(process.execPath, [self], {

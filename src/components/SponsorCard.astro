@@ -43,6 +43,7 @@ const icon = sponsor ? sponsor.logoUrl || faviconUrl(sponsor.url) : '';
         data-state="open"
         data-price={slot.priceCents}
       >
+        <span class="sp-icon-slot" aria-hidden="true">+</span>
         <span class="sp-label">OPEN SLOT</span>
         <span class="sp-price">
           {usd(slot.priceCents)}
@@ -59,6 +60,7 @@ const icon = sponsor ? sponsor.logoUrl || faviconUrl(sponsor.url) : '';
      reads as a bug, and "reserved" is the honest answer. */
   state === 'reserved' && (
     <a class="sp-card reserved" href="/sponsor" data-slot={slot.id} data-state="reserved">
+      <span class="sp-icon-slot" aria-hidden="true">◷</span>
       <span class="sp-label">RESERVED</span>
       <span class="sp-cta">someone's grabbing this slot; check back soon</span>
     </a>

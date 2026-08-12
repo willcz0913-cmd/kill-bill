@@ -95,10 +95,10 @@ export async function POST({ request }) {
       ...nextOpen.map((s) => `<li>slot ${esc(s.id)} · ${usd(s.priceCents)}, yours from ${esc(startLabel)}</li>`),
     ].join('');
     const subject = nowOpen.length > 0
-      ? 'a sponsor slot just opened on canivibecodeit'
-      : `${startLabel.split(' ')[0].toLowerCase()} sponsor slots just opened on canivibecodeit`;
+      ? 'a sponsor slot just opened on Killbill'
+      : `${startLabel.split(' ')[0].toLowerCase()} sponsor slots just opened on Killbill`;
     const html = brandShell(
-      `<p>You asked to be pinged when a canivibecodeit sponsor slot opens. Open right now:</p>`
+      `<p>You asked to be pinged when a Killbill sponsor slot opens. Open right now:</p>`
       + `<ul>${lines}</ul>`
       + `<p>Fixed slots, one-off 30-day terms, first paid, first placed.</p>`
       + `<p><a href="${esc(siteUrl('/sponsor'))}">take one → ${esc(siteUrl('/sponsor'))}</a></p>`
@@ -134,7 +134,7 @@ export async function POST({ request }) {
     if (!term || Number(term[2]) < 1 || Number(term[2]) > 12) return fail('bad term (YYYY-MM)', 400);
     try {
       const link = await createPaymentLink({
-        name: `canivibecodeit.com · sponsor slot ${slot} (${RUN_DAYS * months} days)`,
+        name: `kill-bill.app · sponsor slot ${slot} (${RUN_DAYS * months} days)`,
         priceCents: Math.round(dollars * 100),
         metadata: {
           purpose: `sponsor_${kind}_${term[1]}_${term[2]}`,
@@ -192,14 +192,14 @@ export async function POST({ request }) {
       to: purchase.email,
       subject: scheduled
         ? `approved · you're live from ${shortDate(startsAt)}`
-        : `you're live on canivibecodeit until ${shortDate(endsAt)}`,
+        : `you're live on Killbill until ${shortDate(endsAt)}`,
       html: brandShell(
         `<p><b>${esc(purchase.name)}</b> is approved for slot ${esc(purchase.slot_id)}`
         + (scheduled
           ? ` and goes up ${esc(shortDate(startsAt))}, running until ${esc(shortDate(endsAt))}.</p>`
           : ` right now, and runs until ${esc(shortDate(endsAt))} (${RUN_DAYS * (Number(purchase.months) || 1)} days).</p>`)
         + `<p>Your link carries campaign tags, so the traffic shows up in your analytics as`
-        + ` canivibecodeit / referral.</p>`
+        + ` killbill / referral.</p>`
       ),
     });
     return done(`${purchase.slot_id} live ${scheduled ? `${shortDate(startsAt)} to` : 'until'} ${shortDate(endsAt)}`);
@@ -239,7 +239,7 @@ export async function POST({ request }) {
     await updatePurchase(purchase.id, { status: 'rejected' }, REFUNDABLE);
     await sendMail({
       to: purchase.email,
-      subject: 'your canivibecodeit sponsor slot · refunded',
+      subject: 'your Killbill sponsor slot · refunded',
       html: brandShell(
         `<p>We didn't run this placement, and your payment has been refunded in full.`
         + ` It lands back on your card in 5–10 days.</p>`

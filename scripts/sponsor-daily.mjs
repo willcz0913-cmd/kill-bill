@@ -28,9 +28,9 @@ const LOG_FILE = path.join(STATE_DIR, 'sponsor.log');
 const LOCK_STALE_MS = 30 * 60 * 1000;
 const LOG_MAX_BYTES = 1024 * 1024;
 
-const SITE = 'https://canivibecodeit.com';
-const FROM = 'Rob at canivibecodeit <digest@send.canivibecodeit.com>';
-const REPLY_TO = 'digest@canivibecodeit.com';
+const SITE = 'https://kill-bill.app';
+const FROM = 'Killbill <digest@send.kill-bill.app>';
+const REPLY_TO = 'digest@kill-bill.app';
 
 const DRY = process.argv.includes('--dry');
 const USE_SQLITE = process.argv.includes('--sqlite');
@@ -245,7 +245,7 @@ async function robNudges(db, now) {
   }
   console.log(lines.map((l) => `nudge: ${l}`).join('\n'));
   await alert(
-    `canivibecodeit sponsors need you (${lines.length})`,
+    `Killbill sponsors need you (${lines.length})`,
     `${lines.join('\n')}\n\nAdmin: ${SITE}/admin/sponsors?token=...`
   );
   return lines.length;
@@ -314,7 +314,7 @@ try {
   console.error(`sponsor-daily failed: ${message}`);
   if (!DRY) {
     try {
-      await alert('canivibecodeit sponsor-daily FAILED', `Daily sponsor run failed: ${message}`);
+      await alert('Killbill sponsor-daily FAILED', `Daily sponsor run failed: ${message}`);
     } catch (alertErr) {
       console.error(`alert failed: ${alertErr?.message || alertErr}`);
     }

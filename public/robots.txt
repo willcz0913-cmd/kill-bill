@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://canivibecodeit.com/sitemap.xml
+Sitemap: https://kill-bill.app/sitemap.xml
