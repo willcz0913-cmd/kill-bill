@@ -25,20 +25,11 @@ const SEPT_TIMELINE = [
   { date: 'sep 1', note: 'board goes live', live: false },
 ];
 
-const testimonials = [
-  {
-    quote:
-      '100+ visitors within hours of going live. cheaper than ads.',
-    who: 'Pierre-Eliott · co-founder, Gojiberry AI',
-    img: '/pfp/pierre-eliott.jpg',
-  },
-  {
-    quote:
-      'in 24 hours: 200+ visitors, 5 trials. we pay $90 for a trial on Meta ads. the traffic is highly qualified, mostly from the US.',
-    who: 'Dylan · co-founder, Gojiberry AI',
-    img: '/pfp/dylan.jpg',
-  },
-];
+// Prices are a per-slot ladder in the DB, so the page reads the range off the
+// board rather than quoting a single figure.
+const slotPrices = board.slots.map((s) => s.priceCents);
+const minPrice = Math.min(...slotPrices);
+const maxPrice = Math.max(...slotPrices);
 
 // "Taken" = not buyable right now: live runs whose next month is still the
 // incumbent's to refuse count as held.
@@ -50,7 +41,7 @@ const takenCount = board.slots.length - buyableCount;
 const steps = [
   {
     head: 'pick a slot and pay',
-    body: 'one click to Stripe. no account, no call, no contract. the slot is held while you check out.',
+    body: 'one click to checkout. no account, no call, no contract. the slot is held while you check out.',
   },
   {
     head: 'tell us who you are',
@@ -73,10 +64,9 @@ const steps = [
         gets picked from.
       </p>
       <div class="sp-statband">
-        <div class="sp-stat" style="--i: 0"><b>300,000+</b><span>views a month, current pace</span></div>
-        <div class="sp-stat" style="--i: 1"><b>{apps.length}</b><span>apps on the list</span></div>
-        <div class="sp-stat" style="--i: 2"><b>builders</b><span>choosing their AI-era stack</span></div>
-        <div class="sp-stat green" style="--i: 3"><b>{takenCount}/{board.slots.length}</b><span>{NEXT_MONTH} slots taken</span></div>
+        <div class="sp-stat" style="--i: 0"><b>{apps.length}</b><span>apps on the list</span></div>
+        <div class="sp-stat" style="--i: 1"><b>builders</b><span>choosing their AI-era stack</span></div>
+        <div class="sp-stat green" style="--i: 2"><b>{takenCount}/{board.slots.length}</b><span>{NEXT_MONTH} slots taken</span></div>
       </div>
     </section>
 
@@ -90,9 +80,9 @@ const steps = [
         <span class="note">10 fixed slots. yours is yours: no rotation, no sharing.</span>
       </div>
       <div class="sp-flat">
-        <span class="sp-flat-price">$2,500</span>
+        <span class="sp-flat-price">from {usd(minPrice)}</span>
         <span class="sp-flat-note">
-          one price, any open slot, 30 days. what you pay never changes mid-run.
+          each slot is priced by position, {usd(minPrice)} to {usd(maxPrice)} for {RUN_DAYS} days. what you pay never changes mid-run.
         </span>
       </div>
       <div class="sp-sept-timeline" role="list" aria-label="September timeline">
@@ -103,19 +93,6 @@ const steps = [
               <span class="sp-sept-date">{s.date}</span>
               <span class="sp-sept-what">{s.note}</span>
             </div>
-          ))
-        }
-      </div>
-      <div class="sp-quotes">
-        {
-          testimonials.map((t) => (
-            <figure class="sp-quote">
-              <blockquote>“{t.quote}”</blockquote>
-              <figcaption>
-                <img src={t.img} alt="" width="36" height="36" loading="lazy" />
-                <span>{t.who}</span>
-              </figcaption>
-            </figure>
           ))
         }
       </div>
@@ -153,7 +130,7 @@ const steps = [
     <section class="sp-board" id="slots">
       <div class="list-head">
         <h2>The slots</h2>
-        <span class="note">$2,500 flat · your rate never rises while you stay</span>
+        <span class="note">{usd(minPrice)} to {usd(maxPrice)} by slot · your rate never rises while you stay</span>
       </div>
       <div class="sp-grid">
         {
@@ -387,59 +364,6 @@ const steps = [
     color: var(--muted);
   }
 
-  .sp-quotes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    margin-top: 44px;
-  }
-
-  .sp-quote {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 16px;
-    margin: 0;
-    padding-right: 48px;
-  }
-
-  .sp-quote + .sp-quote {
-    border-left: 1px solid var(--border);
-    padding-left: 48px;
-    padding-right: 0;
-  }
-
-  .sp-quote blockquote {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: 19px;
-    font-weight: 500;
-    line-height: 1.5;
-    /* Hanging open quote. */
-    text-indent: -0.55ch;
-  }
-
-  .sp-quote figcaption {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .sp-quote figcaption img {
-    width: 36px;
-    height: 36px;
-    border-radius: 100px;
-    flex-shrink: 0;
-    transition: transform 0.2s var(--ease-snap);
-  }
-
-  .sp-quote:hover figcaption img {
-    transform: scale(1.08);
-  }
-
   .sp-who-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -556,22 +480,6 @@ const steps = [
 
     .sp-sept-dot {
       top: 2px;
-    }
-
-    .sp-quotes {
-      grid-template-columns: 1fr;
-      gap: 28px;
-    }
-
-    .sp-quote {
-      padding-right: 0;
-    }
-
-    .sp-quote + .sp-quote {
-      border-left: 0;
-      border-top: 1px solid var(--border);
-      padding-left: 0;
-      padding-top: 28px;
     }
 
     .sp-who-grid {

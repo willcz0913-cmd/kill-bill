@@ -34,8 +34,8 @@ const themeHash = createHash('sha256').update(THEME_SCRIPT, 'utf8').digest('base
      external images by design (SponsorTape, details preview).
    - font-src data:: Vite inlines sub-4KB font subsets into the CSS.
    - media-src: the header radio streams from nightride.fm.
-   - form-action: the sponsor checkout form ends in a redirect to Stripe,
-     which some browsers validate against form-action. */
+   - form-action: the sponsor checkout form ends in a redirect to the Dodo
+     Payments hosted checkout, which some browsers validate against form-action. */
 const POLICY = [
   "default-src 'self'",
   `script-src 'self' 'sha256-${themeHash}' 'report-sample'`,
@@ -46,7 +46,7 @@ const POLICY = [
   "media-src 'self' https://stream.nightride.fm",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self' https://checkout.stripe.com",
+  "form-action 'self' https://*.dodopayments.com",
   "frame-ancestors 'self'",
   'report-uri /api/csp-report',
 ].join('; ');

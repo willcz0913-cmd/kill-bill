@@ -2,22 +2,24 @@
 import Base from '../../layouts/Base.astro';
 import { purchaseByToken } from '../../lib/db.js';
 import { DEFAULT_TINT, LIMITS, RUN_DAYS, shortDate, tintChannels, usd } from '../../lib/sponsors.js';
-import { getSession } from '../../lib/stripe.js';
+import { getPayment } from '../../lib/dodo.js';
 import { promoteFromSession } from '../api/sponsor/webhook.js';
 
 const token = Astro.url.searchParams.get('t') || '';
-const sessionId = Astro.url.searchParams.get('session_id') || '';
+// Dodo appends the payment id to the return url; fall back to session_id for any
+// older links still floating around.
+const paymentId =
+  Astro.url.searchParams.get('payment_id') || Astro.url.searchParams.get('session_id') || '';
 let purchase = token ? await purchaseByToken(token) : null;
 
-/* The webhook and this redirect race each other, and locally there is no webhook
-   at all. Asking Stripe directly settles it: same conditional update, so whoever
-   gets here second changes nothing. */
-if (purchase && (purchase.status === 'hold' || purchase.status === 'expired_hold') && sessionId) {
+/* The webhook and this redirect race each other. Asking Dodo directly settles
+   it: same conditional update, so whoever gets here second changes nothing. */
+if (purchase && (purchase.status === 'hold' || purchase.status === 'expired_hold') && paymentId) {
   try {
-    const promoted = await promoteFromSession(await getSession(sessionId));
+    const promoted = await promoteFromSession(await getPayment(paymentId));
     if (promoted && promoted.id === purchase.id) purchase = promoted;
   } catch (err) {
-    console.error(`sponsor details session lookup failed: ${err?.message || err}`);
+    console.error(`sponsor details payment lookup failed: ${err?.message || err}`);
   }
 }
 
@@ -47,7 +49,7 @@ const description = 'Finish setting up your sponsor placement.';
         <section class="sp-hero">
           <h1>Still waiting on the payment.</h1>
           <p class="sub">
-            Stripe hasn't confirmed this one yet. Give it a minute and reload. If it never
+            The payment hasn't been confirmed yet. Give it a minute and reload. If it never
             confirms, nothing was charged and the slot goes back on sale.
           </p>
         </section>

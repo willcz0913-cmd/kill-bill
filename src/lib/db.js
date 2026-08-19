@@ -139,6 +139,22 @@ const SCHEMA_SQLITE = `
     created_at INTEGER NOT NULL,
     PRIMARY KEY (user_id, app_slug)
   );
+  /* Reader-submitted apps and alternatives. Not the death list itself (that
+     stays JSON-by-PR); this is the inbox the reader form writes to and the
+     admin reviews before promoting an entry into data/apps. */
+  CREATE TABLE IF NOT EXISTS app_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    alternative_to TEXT,
+    replaces_slug TEXT,
+    category TEXT,
+    pitch TEXT,
+    email TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS app_submissions_recent ON app_submissions (status, created_at);
 `;
 
 const SCHEMA_PG = `
@@ -275,23 +291,33 @@ const SCHEMA_PG = `
     created_at BIGINT NOT NULL,
     PRIMARY KEY (user_id, app_slug)
   );
+  /* Reader-submitted apps and alternatives. Not the death list itself (that
+     stays JSON-by-PR); this is the inbox the reader form writes to and the
+     admin reviews before promoting an entry into data/apps. */
+  CREATE TABLE IF NOT EXISTS app_submissions (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    alternative_to TEXT,
+    replaces_slug TEXT,
+    category TEXT,
+    pitch TEXT,
+    email TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at BIGINT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS app_submissions_recent ON app_submissions (status, created_at);
 `;
 
-/* Six fixed slots, three per rail side. Seed prices only — editable at runtime. */
+/* Ten fixed slots, five per rail side, on a symmetric price ladder by position
+   (5→1). Seed prices only — editable at runtime, and seeds only apply to NEW
+   rows, so an existing DB is updated via setSlotPrice, never by re-seeding. */
 const SLOT_SEED = [
-  ['L1', 29900],
-  ['R1', 39900],
-  ['L2', 49900],
-  ['R2', 59900],
-  ['L3', 69900],
-  ['R3', 79900],
-  // Added at 8 slots (2026-08-01, launch night): seeds only apply to NEW rows —
-  // existing slot prices set from the admin are never overwritten.
-  ['L4', 119900],
-  ['R4', 149900],
-  // 10 slots (launch night +2, $999 cleared within the hour):
-  ['L5', 149900],
-  ['R5', 149900],
+  ['L1', 49900], ['R1', 49900], // $499
+  ['L2', 19900], ['R2', 19900], // $199
+  ['L3', 9900], ['R3', 9900], //   $99
+  ['L4', 4900], ['R4', 4900], //   $49
+  ['L5', 1900], ['R5', 1900], //   $19
 ];
 
 // Everything the slot-blocked predicate and the board care about. Anything else
@@ -387,6 +413,10 @@ async function pgDriver() {
   await pool.query('ALTER TABLE sponsor_slots ADD COLUMN IF NOT EXISTS renewal_price_cents INTEGER');
   // When the automated next-run offer email went out for a purchase.
   await pool.query('ALTER TABLE sponsor_purchases ADD COLUMN IF NOT EXISTS reminder_offer_at BIGINT');
+  // Which death-list app a reader submission is an alternative to (NULL = the
+  // paid app it replaces isn't on the list, so it has no page to show on yet).
+  await pool.query('ALTER TABLE app_submissions ADD COLUMN IF NOT EXISTS replaces_slug TEXT');
+  await pool.query('CREATE INDEX IF NOT EXISTS app_submissions_replaces ON app_submissions (replaces_slug, status)');
   await pool.query("UPDATE waitlist SET source = 'scanner' WHERE source IS NULL");
   for (const [id, cents] of SLOT_SEED) {
     await pool.query(
@@ -601,6 +631,64 @@ async function pgDriver() {
         clicksSince: clk.rows[0].since == null ? null : Number(clk.rows[0].since),
       };
     },
+    async addAppSubmission(s) {
+      await pool.query(
+        `INSERT INTO app_submissions
+           (name, url, alternative_to, replaces_slug, category, pitch, email, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
+        [s.name, s.url, s.alternativeTo, s.replacesSlug ?? null, s.category, s.pitch, s.email, Date.now()]
+      );
+    },
+    // Approved reader submissions that replace this app, newest first. Only the
+    // fields the public card renders; unapproved rows never leave the queue.
+    async approvedAlternativesFor(slug) {
+      const r = await pool.query(
+        `SELECT name, url, pitch, created_at FROM app_submissions
+         WHERE status = 'approved' AND replaces_slug = $1
+         ORDER BY created_at DESC`,
+        [slug]
+      );
+      return r.rows.map((x) => ({ name: x.name, url: x.url, pitch: x.pitch, createdAt: Number(x.created_at) }));
+    },
+    async recentSubmissions(limit) {
+      const r = await pool.query(
+        `SELECT name, url, alternative_to, category, pitch, created_at
+         FROM app_submissions WHERE status <> 'rejected'
+         ORDER BY created_at DESC LIMIT $1`,
+        [limit]
+      );
+      return r.rows.map((x) => ({
+        name: x.name,
+        url: x.url,
+        alternativeTo: x.alternative_to,
+        category: x.category,
+        pitch: x.pitch,
+        createdAt: Number(x.created_at),
+      }));
+    },
+    async submissionsForAdmin(limit) {
+      const r = await pool.query(
+        `SELECT id, name, url, alternative_to, replaces_slug, category, pitch, email, status, created_at
+         FROM app_submissions ORDER BY created_at DESC LIMIT $1`,
+        [limit]
+      );
+      return r.rows.map((x) => ({
+        id: Number(x.id),
+        name: x.name,
+        url: x.url,
+        alternativeTo: x.alternative_to,
+        replacesSlug: x.replaces_slug,
+        category: x.category,
+        pitch: x.pitch,
+        email: x.email,
+        status: x.status,
+        createdAt: Number(x.created_at),
+      }));
+    },
+    async setSubmissionStatus(id, status) {
+      const r = await pool.query('UPDATE app_submissions SET status = $2 WHERE id = $1', [id, status]);
+      return r.rowCount > 0;
+    },
   };
 }
 
@@ -637,6 +725,14 @@ async function sqliteDriver() {
   } catch (err) {
     if (!/duplicate column/i.test(err.message)) throw err;
   }
+  // Which death-list app a reader submission is an alternative to (NULL = the
+  // paid app it replaces isn't on the list, so it has no page to show on yet).
+  try {
+    db.exec('ALTER TABLE app_submissions ADD COLUMN replaces_slug TEXT');
+  } catch (err) {
+    if (!/duplicate column/i.test(err.message)) throw err;
+  }
+  db.exec('CREATE INDEX IF NOT EXISTS app_submissions_replaces ON app_submissions (replaces_slug, status)');
   db.exec("UPDATE waitlist SET source = 'scanner' WHERE source IS NULL");
   const seedSlot = db.prepare('INSERT OR IGNORE INTO sponsor_slots (id, price_cents) VALUES (?, ?)');
   for (const [id, cents] of SLOT_SEED) seedSlot.run(id, cents);
@@ -819,6 +915,65 @@ async function sqliteDriver() {
         clicksSince: clk.since == null ? null : Number(clk.since),
       };
     },
+    async addAppSubmission(s) {
+      db.prepare(
+        `INSERT INTO app_submissions
+           (name, url, alternative_to, replaces_slug, category, pitch, email, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+      ).run(s.name, s.url, s.alternativeTo, s.replacesSlug ?? null, s.category, s.pitch, s.email, Date.now());
+    },
+    // Approved reader submissions that replace this app, newest first. Only the
+    // fields the public card renders; unapproved rows never leave the queue.
+    async approvedAlternativesFor(slug) {
+      return db
+        .prepare(
+          `SELECT name, url, pitch, created_at FROM app_submissions
+           WHERE status = 'approved' AND replaces_slug = ?
+           ORDER BY created_at DESC`
+        )
+        .all(slug)
+        .map((x) => ({ name: x.name, url: x.url, pitch: x.pitch, createdAt: Number(x.created_at) }));
+    },
+    async recentSubmissions(limit) {
+      return db
+        .prepare(
+          `SELECT name, url, alternative_to, category, pitch, created_at
+           FROM app_submissions WHERE status <> 'rejected'
+           ORDER BY created_at DESC LIMIT ?`
+        )
+        .all(limit)
+        .map((x) => ({
+          name: x.name,
+          url: x.url,
+          alternativeTo: x.alternative_to,
+          category: x.category,
+          pitch: x.pitch,
+          createdAt: Number(x.created_at),
+        }));
+    },
+    async submissionsForAdmin(limit) {
+      return db
+        .prepare(
+          `SELECT id, name, url, alternative_to, replaces_slug, category, pitch, email, status, created_at
+           FROM app_submissions ORDER BY created_at DESC LIMIT ?`
+        )
+        .all(limit)
+        .map((x) => ({
+          id: Number(x.id),
+          name: x.name,
+          url: x.url,
+          alternativeTo: x.alternative_to,
+          replacesSlug: x.replaces_slug,
+          category: x.category,
+          pitch: x.pitch,
+          email: x.email,
+          status: x.status,
+          createdAt: Number(x.created_at),
+        }));
+    },
+    async setSubmissionStatus(id, status) {
+      return db.prepare('UPDATE app_submissions SET status = ? WHERE id = ?').run(status, id).changes > 0;
+    },
   };
 }
 
@@ -980,6 +1135,35 @@ export async function setUserNewsletter(userId, on) {
 
 export async function removeFromWaitlist(email) {
   return (await getDriver()).removeFromWaitlist(email);
+}
+
+// Reader submissions: one app or alternative suggested through /submit-an-app.
+export async function addAppSubmission(sub) {
+  return (await getDriver()).addAppSubmission(sub);
+}
+
+// Recent suggestions for the public list under the form. Rejected rows are
+// hidden, so moderating one out of the DB drops it from the page too.
+export async function recentSubmissions(limit = 60) {
+  return (await getDriver()).recentSubmissions(limit);
+}
+
+// Approved community alternatives for one app, rendered in the "community"
+// section of its verdict + alternatives pages. Approval-gated, so only vetted
+// rows reach a public page.
+export async function approvedAlternativesFor(slug) {
+  return (await getDriver()).approvedAlternativesFor(slug);
+}
+
+// Admin moderation: every submission, any status, newest first.
+export async function submissionsForAdmin(limit = 300) {
+  return (await getDriver()).submissionsForAdmin(limit);
+}
+
+// Remove ('rejected') or restore ('pending') a submission. Rejected rows drop
+// out of the public list but stay in the table so the action is reversible.
+export async function setSubmissionStatus(id, status) {
+  return (await getDriver()).setSubmissionStatus(id, status);
 }
 
 // The headline number: total monthly cost of every subscription on the death list.

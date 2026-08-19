@@ -12,12 +12,14 @@ import {
   appsWithAlternativesPage,
   sortedAlternatives,
   yearlySaving,
+  communityAlt,
   ALTERNATIVES_PAGE_MIN,
   COMMON_NOUN_SLUGS,
   SELF_HOST_LABELS,
   CATEGORIES,
   VERDICTS,
 } from '../../lib/apps.js';
+import { approvedAlternativesFor } from '../../lib/db.js';
 
 const { slug } = Astro.params;
 const app = getApp(slug);
@@ -25,6 +27,10 @@ if (!app) return new Response(null, { status: 404 });
 
 const alternatives = sortedAlternatives(app);
 if (alternatives.length < ALTERNATIVES_PAGE_MIN) return new Response(null, { status: 404 });
+
+// Approved reader submissions for this app, shown below the curated list as a
+// clearly-separated, unverified community group.
+const community = (await approvedAlternativesFor(app.slug)).map(communityAlt);
 
 const cat = CATEGORIES[app.category];
 const v = VERDICTS[app.verdict];
@@ -133,6 +139,17 @@ const jsonld = [
     <p class="eh-foot">
       <span>last updated {updated} · no votes, no pay-to-list · just what's real</span>
     </p>
+
+    {
+      community.length > 0 && (
+        <section class="alt-list seg community-list">
+          <span class="microlabel">community apps · reader-submitted, not yet verified</span>
+          {community.map((alt, i) => (
+            <AltCard {alt} i={i} />
+          ))}
+        </section>
+      )
+    }
 
     {
       app.rejectedAlternatives.length > 0 && (

@@ -8,7 +8,7 @@ import {
   cleanText, cleanTint, cleanUrl, clearCache, getBoard, isAdmin, isLive, LIMITS, nextRunStart,
   RUN_DAYS, RUN_MS, shortDate, siteUrl, SLOT_IDS, SPILL_MS, usd, verifyAction,
 } from '../../../lib/sponsors.js';
-import { alreadyRefunded, createPaymentLink, createRefund } from '../../../lib/stripe.js';
+import { alreadyRefunded, createPaymentLink, createRefund } from '../../../lib/dodo.js';
 
 const NEXT_STATES = ['pending', 'open', 'reserved'];
 
@@ -148,7 +148,7 @@ export async function POST({ request }) {
       return done(`${slot} ${kind} link (${usd(Math.round(dollars * 100))} total, ${RUN_DAYS * months} days): ${link.url}`);
     } catch (err) {
       console.error(`payment link failed: ${err?.message || err}`);
-      return fail('stripe refused the link; check the log', 502);
+      return fail('dodo refused the link; check the log', 502);
     }
   }
 

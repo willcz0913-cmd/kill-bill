@@ -22,7 +22,7 @@ import { brandShell, button } from '../src/lib/mail.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Overridable so a supervised test run can keep its lock and log out of the
 // real state directory.
-const STATE_DIR = process.env.SPONSOR_STATE_DIR || '/srv/http/canivibecodeit-data/sponsor';
+const STATE_DIR = process.env.SPONSOR_STATE_DIR || '/srv/http/kill-bill-data/sponsor';
 const LOCK_FILE = path.join(STATE_DIR, 'sponsor.lock');
 const LOG_FILE = path.join(STATE_DIR, 'sponsor.log');
 const LOCK_STALE_MS = 30 * 60 * 1000;

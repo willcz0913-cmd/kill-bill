@@ -450,7 +450,7 @@
     // Dev preview only: PostHog creds never exist on dev boxes, so ?demo=1
     // fakes a plausible payload to exercise the pins, tooltips and feed.
     // Never renders on the production domain.
-    if (!data && location.hostname !== 'canivibecodeit.com' && new URLSearchParams(location.search).has('demo')) {
+    if (!data && location.hostname !== 'kill-bill.app' && new URLSearchParams(location.search).has('demo')) {
       data = {
         live: 23,
         liveCountries: 11,

@@ -18,7 +18,7 @@ const fetchBuf = async (url) => {
   const res = await fetch(url, {
     redirect: 'follow',
     signal: AbortSignal.timeout(15000),
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; canivibecodeit-icons)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; killbill-icons)' },
   });
   if (!res.ok) return null;
   return Buffer.from(await res.arrayBuffer());

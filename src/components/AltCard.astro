@@ -15,6 +15,15 @@ const host = (() => {
 })();
 const iconFile = host ? `/icons/alt/${host}.png` : null;
 const hasIcon = iconFile && existsSync(`public${iconFile}`);
+// Curated alts use the build-time favicon file; community alts carry an
+// explicit live favicon URL (alt.logo). Either way, fall back to a letter tile.
+const logoSrc = alt.logo || (hasIcon ? iconFile : null);
+
+// Community submissions are reader-supplied, so their links are nofollow ugc
+// and they wear a distinct badge instead of the curated free/open-source one.
+const rel = alt.community ? 'nofollow noopener ugc' : 'noopener';
+const badgeText = alt.community ? 'community' : alt.type === 'open-source' ? 'open source' : 'free';
+const badgeClass = alt.community ? 'community' : alt.type === 'open-source' ? 'oss' : 'free';
 
 // Deterministic tint for the letter tile when we don't have a favicon yet.
 const TINTS = ['#A78BFA', '#7DD3FC', '#F87171', '#FBBF24', '#34D399', '#F472B6'];
@@ -56,9 +65,9 @@ const ICONS = {
 
 {
   compact ? (
-    <a class="alt-row" href={alt.url} target="_blank" rel="noopener" style={`--i: ${i}`}>
-      {hasIcon ? (
-        <img class="alt-tile" src={iconFile} alt="" width="30" height="30" loading="lazy" />
+    <a class="alt-row" href={alt.url} target="_blank" rel={rel} style={`--i: ${i}`}>
+      {logoSrc ? (
+        <img class="alt-tile" src={logoSrc} alt="" width="30" height="30" loading="lazy" />
       ) : (
         <span class="alt-tile" style={`color: ${tint}`}>{alt.name[0].toUpperCase()}</span>
       )}
@@ -78,23 +87,23 @@ const ICONS = {
           <b class="alt-zero">$0</b>
         )}
       </span>
-      <span class:list={['alt-badge', alt.type === 'open-source' ? 'oss' : 'free']}>
-        {alt.type === 'open-source' ? 'open source' : 'free'}
+      <span class:list={['alt-badge', badgeClass]}>
+        {badgeText}
       </span>
       <span class="arrow">↗</span>
     </a>
   ) : (
     <div class="alt-card" style={`--i: ${i}`}>
-      {hasIcon ? (
-        <img class="alt-tile big" src={iconFile} alt="" width="38" height="38" loading="lazy" />
+      {logoSrc ? (
+        <img class="alt-tile big" src={logoSrc} alt="" width="38" height="38" loading="lazy" />
       ) : (
         <span class="alt-tile big" style={`color: ${tint}`}>{alt.name[0].toUpperCase()}</span>
       )}
       <div class="alt-body">
         <div class="alt-title">
-          <a class="alt-name" href={alt.url} target="_blank" rel="noopener">{alt.name}</a>
-          <span class:list={['alt-badge', alt.type === 'open-source' ? 'oss' : 'free']}>
-            {alt.type === 'open-source' ? 'open source' : 'free'}
+          <a class="alt-name" href={alt.url} target="_blank" rel={rel}>{alt.name}</a>
+          <span class:list={['alt-badge', badgeClass]}>
+            {badgeText}
           </span>
           <span class="alt-platforms">
             {groups.map((g) => (
@@ -126,7 +135,7 @@ const ICONS = {
           <span class="alt-stars"><b class="alt-zero">$0 forever</b></span>
         )}
         <span class="alt-links">
-          <a href={alt.url} target="_blank" rel="noopener">{host} ↗</a>
+          <a href={alt.url} target="_blank" rel={rel}>{host} ↗</a>
           {alt.repo && <a href={alt.repo} target="_blank" rel="noopener">repo ↗</a>}
         </span>
       </div>

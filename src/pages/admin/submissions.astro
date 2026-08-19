@@ -1,0 +1,298 @@
+---
+import Base from '../../layouts/Base.astro';
+import { submissionsForAdmin } from '../../lib/db.js';
+import { CATEGORIES } from '../../lib/apps.js';
+import { isAdmin } from '../../lib/sponsors.js';
+
+const token = Astro.url.searchParams.get('token') || '';
+// Wrong or missing token looks exactly like a page that doesn't exist.
+if (!isAdmin(token)) return new Response(null, { status: 404 });
+
+const subs = await submissionsForAdmin(300);
+const msg = Astro.url.searchParams.get('msg') || '';
+const live = subs.filter((s) => s.status !== 'rejected');
+const removed = subs.filter((s) => s.status === 'rejected');
+
+const catLabel = (k) => CATEGORIES[k]?.label ?? null;
+const day = (ms) => new Date(ms).toISOString().slice(0, 10);
+const host = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
+
+const title = 'Submissions · admin';
+---
+
+<Base {title} description="Reader submissions moderation." noindex>
+  <main class="wrap admin">
+    <div class="admin-head">
+      <h1>Submissions</h1>
+      <span class="note">
+        {live.length} showing · {removed.length} removed ·
+        <a href={`/admin/sponsors?token=${encodeURIComponent(token)}`}>sponsors →</a>
+      </span>
+    </div>
+
+    {msg && <p class="admin-msg">{msg}</p>}
+
+    {subs.length === 0 && <p class="admin-empty">Nothing submitted yet.</p>}
+
+    {live.length > 0 && (
+      <ul class="mod-list">
+        {live.map((s) => (
+          <li class="mod-item">
+            <div class="mod-main">
+              <a class="mod-name" href={s.url} target="_blank" rel="nofollow noopener">{s.name}</a>
+              <span class="mod-host">{host(s.url)}</span>
+              {s.alternativeTo && (
+                s.replacesSlug ? (
+                  <a class="mod-alt" href={`/${s.replacesSlug}/alternatives`}>replaces {s.alternativeTo} →</a>
+                ) : (
+                  <span class="mod-alt unlisted" title="Not a listed app: won't show on a page until you add it">
+                    replaces {s.alternativeTo} · unlisted
+                  </span>
+                )
+              )}
+              {s.status === 'approved' && <span class="mod-status live">approved</span>}
+            </div>
+            {s.pitch && <p class="mod-pitch">{s.pitch}</p>}
+            <div class="mod-meta">
+              {catLabel(s.category) && <span>{catLabel(s.category)}</span>}
+              {s.email && <span>{s.email}</span>}
+              <span>{day(s.createdAt)}</span>
+              <div class="mod-actions">
+                {s.status === 'approved' ? (
+                  <form method="post" action="/api/admin/submissions">
+                    <input type="hidden" name="token" value={token} />
+                    <input type="hidden" name="id" value={s.id} />
+                    <input type="hidden" name="action" value="unapprove" />
+                    <button class="btn ghost" type="submit">unapprove</button>
+                  </form>
+                ) : (
+                  <form method="post" action="/api/admin/submissions" title={s.replacesSlug ? '' : 'No listed app to attach to yet'}>
+                    <input type="hidden" name="token" value={token} />
+                    <input type="hidden" name="id" value={s.id} />
+                    <input type="hidden" name="action" value="approve" />
+                    <button class="btn ghost approve" type="submit" disabled={!s.replacesSlug}>approve</button>
+                  </form>
+                )}
+                <form method="post" action="/api/admin/submissions" data-confirm>
+                  <input type="hidden" name="token" value={token} />
+                  <input type="hidden" name="id" value={s.id} />
+                  <input type="hidden" name="action" value="remove" />
+                  <button class="btn ghost danger" type="submit">remove</button>
+                </form>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {removed.length > 0 && (
+      <section class="mod-removed">
+        <div class="admin-head">
+          <h2>Removed</h2>
+          <span class="note">hidden from the public list, restorable</span>
+        </div>
+        <ul class="mod-list">
+          {removed.map((s) => (
+            <li class="mod-item is-removed">
+              <div class="mod-main">
+                <a class="mod-name" href={s.url} target="_blank" rel="nofollow noopener">{s.name}</a>
+                <span class="mod-host">{host(s.url)}</span>
+                {s.alternativeTo && <span class="mod-alt">replaces {s.alternativeTo}</span>}
+              </div>
+              {s.pitch && <p class="mod-pitch">{s.pitch}</p>}
+              <div class="mod-meta">
+                {catLabel(s.category) && <span>{catLabel(s.category)}</span>}
+                {s.email && <span>{s.email}</span>}
+                <span>{day(s.createdAt)}</span>
+                <form method="post" action="/api/admin/submissions" class="mod-act">
+                  <input type="hidden" name="token" value={token} />
+                  <input type="hidden" name="id" value={s.id} />
+                  <input type="hidden" name="action" value="restore" />
+                  <button class="btn ghost" type="submit">restore</button>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </main>
+</Base>
+
+<script>
+  // Confirm before a destructive remove. Document-level, once per load.
+  document.addEventListener('submit', (e) => {
+    const form = e.target.closest('[data-confirm]');
+    if (form && !confirm('Remove this submission from the public list?')) e.preventDefault();
+  });
+</script>
+
+<style>
+  .admin-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .admin-head h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .admin-head h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .admin-msg {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--primary);
+  }
+
+  .admin-empty {
+    margin-top: 20px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+
+  .mod-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+  }
+
+  .mod-item {
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mod-item:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mod-item.is-removed {
+    opacity: 0.6;
+  }
+
+  .mod-main {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .mod-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .mod-name:hover {
+    color: var(--primary);
+  }
+
+  .mod-host {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .mod-alt {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    border-radius: 100px;
+    padding: 2px 10px;
+  }
+
+  .mod-status {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mod-status.live {
+    color: var(--primary);
+  }
+
+  .mod-alt.unlisted {
+    color: var(--muted);
+    border-color: var(--border);
+    opacity: 0.8;
+  }
+
+  a.mod-alt:hover {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .mod-pitch {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 75ch;
+  }
+
+  .mod-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .mod-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn.ghost.approve {
+    color: var(--primary);
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+
+  .btn.ghost.approve:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+
+  .btn.ghost.danger {
+    color: var(--no-fg, #ff4444);
+    border-color: color-mix(in srgb, var(--no-fg, #ff4444) 45%, transparent);
+  }
+
+  .mod-removed {
+    margin-top: 40px;
+  }
+</style>

@@ -2515,6 +2515,12 @@ a.tile {
   padding-top: 52px;
 }
 
+/* the reader-submitted group inside the escape hatch, set off from curated */
+.eh-community {
+  display: block;
+  padding-top: 22px;
+}
+
 .eh-head {
   font-family: var(--font-display);
   font-size: 22px;
@@ -2582,6 +2588,12 @@ a.tile {
 .alt-badge.free {
   color: var(--muted);
   border: 1px solid var(--border);
+}
+
+/* reader-submitted: dashed to read as community, not a curated verdict */
+.alt-badge.community {
+  color: var(--muted);
+  border: 1px dashed color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
 /* compact row on the verdict page */
@@ -2670,6 +2682,11 @@ a.tile {
 
 .alt-list {
   padding-top: 10px;
+}
+
+.community-list > .microlabel {
+  display: block;
+  margin-bottom: 6px;
 }
 
 .alt-card {
@@ -3907,6 +3924,80 @@ button.sp-banner {
   border: 1px solid var(--border);
   border-radius: 7px;
   cursor: pointer;
+}
+
+/* Searchable dropdown (public/js/combo.js). The list is dynamically created,
+   so these live in the global sheet, not a scoped page style. */
+.combo {
+  position: relative;
+}
+
+.combo-search {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 12px 16px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s ease;
+}
+
+.combo-search:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.combo-search:-webkit-autofill,
+.combo-search:-webkit-autofill:hover,
+.combo-search:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+  box-shadow: 0 0 0 1000px var(--bg) inset;
+  -webkit-text-fill-color: var(--fg);
+  caret-color: var(--fg);
+}
+
+.combo-list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 264px;
+  overflow-y: auto;
+  background: var(--surface, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.combo-opt {
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.combo-opt:hover,
+.combo-opt.active {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--fg);
+}
+
+.combo-empty {
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .sp-color-hint {

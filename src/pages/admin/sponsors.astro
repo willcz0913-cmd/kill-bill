@@ -51,7 +51,10 @@ const ACTIONS = {
   <main class="wrap admin">
     <div class="list-head">
       <h2>Sponsor slots</h2>
-      <span class="note">{board.openCount}/{board.slots.length} open</span>
+      <span class="note">
+        {board.openCount}/{board.slots.length} open ·
+        <a href={`/admin/submissions?token=${encodeURIComponent(token)}`}>submissions →</a>
+      </span>
     </div>
 
     {msg && <p class="admin-msg">{msg}</p>}

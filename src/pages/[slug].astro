@@ -4,8 +4,8 @@ import VerdictBadge from '../components/VerdictBadge.astro';
 import DigestCard from '../components/DigestCard.astro';
 import DigestReveal from '../components/DigestReveal.astro';
 import AltCard from '../components/AltCard.astro';
-import { getApp, relatedApps, yearlySaving, sortedAlternatives, ALTERNATIVES_PAGE_MIN, CATEGORIES, VERDICTS, MOAT_TAGS, MOAT_TAG_EMOJI, VIBE_CODING_TOOL_SLUGS } from '../lib/apps.js';
-import { stackSlugs, voteCount, voteCounts } from '../lib/db.js';
+import { getApp, relatedApps, yearlySaving, sortedAlternatives, communityAlt, ALTERNATIVES_PAGE_MIN, CATEGORIES, VERDICTS, MOAT_TAGS, MOAT_TAG_EMOJI, VIBE_CODING_TOOL_SLUGS } from '../lib/apps.js';
+import { approvedAlternativesFor, stackSlugs, voteCount, voteCounts } from '../lib/db.js';
 
 const { slug } = Astro.params;
 const app = getApp(slug);
@@ -26,6 +26,10 @@ const moats = (app.moatTags ?? [])
 
 const alternatives = sortedAlternatives(app);
 const hasAltPage = alternatives.length >= ALTERNATIVES_PAGE_MIN;
+
+// Approved reader submissions for this app: shown in the escape hatch below the
+// curated picks, as a distinct unverified community group.
+const community = (await approvedAlternativesFor(app.slug)).map(communityAlt);
 
 const verdictWord = { yes: 'YES', kinda: 'KINDA', no: 'NOT REALLY' }[app.verdict];
 const baseName = app.name.split(' / ')[0];
@@ -259,7 +263,7 @@ const tweet = encodeURIComponent(
           !app.promptCurated && (
             <>
               {' '}· this prompt is generated from the build plan ·{' '}
-              <a href="https://github.com/canivibecodeit/canivibecodeit/blob/main/CONTRIBUTING.md" style="color: var(--primary);">improve it via PR</a>
+              <a href="https://github.com/kirtirajsinh/kill-bill/blob/main/CONTRIBUTING.md" style="color: var(--primary);">improve it via PR</a>
             </>
           )
         }
@@ -330,13 +334,21 @@ const tweet = encodeURIComponent(
     </div>
 
     {
-      alternatives.length > 0 && (
+      (alternatives.length > 0 || community.length > 0) && (
         <section class="escape-hatch">
           <span class="microlabel">the escape hatch</span>
           <h2 class="eh-head">Don't feel like building it? These folks already made it free.</h2>
           {alternatives.slice(0, 3).map((alt, i) => (
             <AltCard {alt} compact i={i} />
           ))}
+          {community.length > 0 && (
+            <>
+              <span class="microlabel eh-community">community apps · reader-submitted</span>
+              {community.slice(0, 4).map((alt, i) => (
+                <AltCard {alt} compact i={alternatives.slice(0, 3).length + i} />
+              ))}
+            </>
+          )}
           <p class="eh-foot">
             {hasAltPage && (
               <a href={`/${app.slug}/alternatives`}>

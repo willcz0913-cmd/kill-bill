@@ -7,9 +7,9 @@ import { clientIp, json, readBody } from '../../../lib/request.js';
 // one cannot change what the rails render.
 import {
   blocksSlot, HOLD_TTL_MS, newToken, nextRunStart, QUARTER_MIN_CENTS, QUARTER_MONTHS,
-  RUN_MS, SESSION_TTL_MS, shortDate, siteUrl, SLOT_IDS, SPILL_MS,
+  RUN_MS, siteUrl, SLOT_IDS, SPILL_MS,
 } from '../../../lib/sponsors.js';
-import { createCheckoutSession } from '../../../lib/stripe.js';
+import { createCheckoutSession } from '../../../lib/dodo.js';
 
 const TAKEN = 'that slot just went';
 
@@ -103,10 +103,9 @@ export async function POST({ request, clientAddress }) {
       slotId,
       priceCents: slot.price_cents * months,
       months,
-      termNote: nextTerm ? `Runs ${shortDate(startsAt)} to ${shortDate(endsAt)}.` : '',
-      successUrl: `${siteUrl('/sponsor/details')}?t=${purchase.details_token}&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: siteUrl('/sponsor'),
-      expiresAt: now + SESSION_TTL_MS,
+      // Dodo appends its own status/payment_id params to this on return; our own
+      // token is what the details page looks the purchase up by.
+      successUrl: `${siteUrl('/sponsor/details')}?t=${purchase.details_token}`,
     });
   } catch (err) {
     console.error(`sponsor checkout failed: ${err?.message || err}`);

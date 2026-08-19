@@ -8,7 +8,7 @@ import { json } from '../../../lib/request.js';
 import {
   blocksSlot, clearCache, isLive, newToken, RUN_MS, shortDate, siteUrl, SLOT_IDS, SPILL_MS, usd,
 } from '../../../lib/sponsors.js';
-import { createRefund, verifyStripeSignature } from '../../../lib/stripe.js';
+import { createRefund, normalizePayment, verifyWebhook } from '../../../lib/dodo.js';
 
 const detailsLink = (purchase) =>
   `${siteUrl('/sponsor/details')}?t=${encodeURIComponent(purchase.details_token)}`;
@@ -332,15 +332,15 @@ export async function promoteFromSession(session, { notify = false } = {}) {
 export async function POST({ request }) {
   // Raw bytes, never readBody: parsing first would change what we hash.
   const raw = await request.text();
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!verifyStripeSignature(raw, request.headers.get('stripe-signature'), secret)) {
-    // Parsed only to name the event in the log — the payload stays untrusted.
-    let id = 'none';
-    try {
-      id = JSON.parse(raw)?.id || 'none';
-    } catch {}
+  const secret = process.env.DODO_WEBHOOK_SECRET;
+  const headers = {
+    id: request.headers.get('webhook-id'),
+    timestamp: request.headers.get('webhook-timestamp'),
+    signature: request.headers.get('webhook-signature'),
+  };
+  if (!verifyWebhook(raw, headers, secret)) {
     console.error(
-      `sponsor webhook rejected: bad signature (event ${id}, secret ${secret ? 'set' : 'MISSING'})`
+      `sponsor webhook rejected: bad signature (id ${headers.id || 'none'}, secret ${secret ? 'set' : 'MISSING'})`
     );
     return json({ error: 'bad signature' }, 400);
   }
@@ -352,26 +352,29 @@ export async function POST({ request }) {
     return json({ error: 'bad request' }, 400);
   }
 
-  const object = event?.data?.object;
+  // Dodo delivers the Payment object under data; reshape it once into the
+  // session-ish form promoteFromSession + reconcileLinkSession already read.
+  const session = normalizePayment(event?.data);
   try {
-    if (event.type === 'checkout.session.completed') {
-      // Hand-issued link sessions have no purchase to promote; they get a row
+    if (event.type === 'payment.succeeded' && session) {
+      // Hand-issued link payments have no purchase to promote; they get a row
       // of their own instead. Everything else takes the normal path.
-      if (!(await reconcileLinkSession(object))) {
-        await promoteFromSession(object, { notify: true });
+      if (!(await reconcileLinkSession(session))) {
+        await promoteFromSession(session, { notify: true });
       }
-    } else if (event.type === 'checkout.session.expired') {
-      const purchase = object?.metadata?.purchase_id
-        ? await purchaseById(object.metadata.purchase_id)
-        : await purchaseBySession(object?.id);
+    } else if ((event.type === 'payment.failed' || event.type === 'payment.cancelled') && session) {
+      // The buyer's payment never completed: free the hold it was tied to.
+      const purchase = session.metadata?.purchase_id
+        ? await purchaseById(session.metadata.purchase_id)
+        : await purchaseBySession(session.id);
       if (purchase) {
         await updatePurchase(purchase.id, { status: 'expired_hold' }, ['hold']);
         clearCache();
       }
     }
   } catch (err) {
-    // A verified event that we mishandled is our bug, not Stripe's: log it and
-    // acknowledge, or Stripe retries the same failure for days.
+    // A verified event that we mishandled is our bug, not Dodo's: log it and
+    // acknowledge, or Dodo retries the same failure for days.
     console.error(`sponsor webhook ${event.type} failed: ${err?.message || err}`);
   }
 

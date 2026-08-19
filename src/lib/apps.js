@@ -351,6 +351,29 @@ export function formatStars(n) {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
 }
 
+// A reader-submitted alternative (an app_submissions row) shaped for <AltCard>.
+// These never pass through the build-time icon fetch, so the logo comes live
+// from the domain's favicon; links render nofollow ugc and there's no star,
+// platform or repo data, so the card degrades to name + one line + "$0".
+export function communityAlt(sub) {
+  let host = null;
+  try {
+    host = new URL(sub.url).hostname.replace(/^www\./, '');
+  } catch {
+    /* the submit handler already rejected non-http(s) urls */
+  }
+  return {
+    name: sub.name,
+    url: sub.url,
+    desc: sub.pitch || 'Reader-submitted free alternative.',
+    type: 'free',
+    community: true,
+    logo: host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64` : null,
+    stars: null,
+    platforms: [],
+  };
+}
+
 // "2026-07" → "jul 2026", for the activity signal on alternative cards.
 export function formatMonth(ym) {
   if (!ym) return null;

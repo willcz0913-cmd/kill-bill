@@ -15,7 +15,7 @@ data/private/
 *.db
 *.sqlite
 *.sqlite3
-# search audit lives in /srv/http/canivibecodeit-data/, never in the repo;
+# search audit lives in /srv/http/kill-bill-data/, never in the repo;
 # this catches any stray copy
 search-audit*
 *.log

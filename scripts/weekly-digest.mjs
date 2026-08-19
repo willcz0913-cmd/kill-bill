@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const STATE_DIR = '/srv/http/canivibecodeit-data/digest';
+const STATE_DIR = '/srv/http/kill-bill-data/digest';
 const STATE_FILE = path.join(STATE_DIR, 'state.json');
 const LOCK_FILE = path.join(STATE_DIR, 'digest.lock');
 const LOG_FILE = path.join(STATE_DIR, 'digest.log');
