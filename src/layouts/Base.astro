@@ -8,6 +8,7 @@ import Radio from '../components/Radio.astro';
 import SignupModal from '../components/SignupModal.astro';
 import SponsorRails from '../components/SponsorRails.astro';
 import SponsorTape from '../components/SponsorTape.astro';
+import { buildsLive } from '../lib/flags.js';
 import { getBoard, nextRunMonthName } from '../lib/sponsors.js';
 import { scriptJson } from '../lib/request.js';
 import { THEME_SCRIPT } from '../lib/csp.js';
@@ -108,8 +109,9 @@ const blocks = [orgLd, ...jsonld];
         <nav class="site-nav">
           <a href="/#death-list">the death list</a>
           <a href="/alternatives">alternatives</a>
+          {buildsLive() && <a class="nav-builds" href="/builds">builds</a>}
           <a href="/stats">stats</a>
-          <a href="/submit-an-app">submit an app</a>
+          <a class="nav-submit" href="/submit">submit an app</a>
           <a href="/sponsor">sponsor</a>
           {
             user ? (
@@ -142,6 +144,16 @@ const blocks = [orgLd, ...jsonld];
     <SponsorRails />
 
     <footer class="site-footer">
+      {/* Sitewide section links. The header hides most of these on narrow
+          viewports (and "submit an app" in the rail-squeezed band), so this
+          row is the guaranteed path to every section from every page. */}
+      <nav class="inner footer-nav" aria-label="Site sections">
+        <a href="/#death-list">the death list</a>
+        <a href="/alternatives">alternatives</a>
+        {buildsLive() && <a href="/builds">builds</a>}
+        <a href="/stats">stats</a>
+        <a href="/submit">submit an app</a>
+      </nav>
       <div class="inner">
       <span>
         Yes, you can vibecode this site too.&ensp;<a href="/vibecode-this-site">Here's the prompt</a>&ensp;·&ensp;<a href="https://github.com/kirtirajsinh/kill-bill">Source on GitHub</a>

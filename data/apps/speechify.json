@@ -3,50 +3,91 @@
   "name": "Speechify",
   "domain": "speechify.com",
   "appURL": "https://speechify.com",
-  "category": "voice-ai",
-  "subcategory": "synthetic voice, dubbing and AI avatars",
-  "tagline": "Read user-supplied documents aloud with a local TTS engine",
-  "priceMonthly": 11.58,
+  "category": "reading",
+  "subcategory": "text-to-speech document reader",
+  "tagline": "Text-to-speech reader for documents, web pages, and scanned text",
+  "priceMonthly": 29,
   "pricing": {
     "plan": "Premium",
-    "basis": "annual-equivalent",
+    "basis": "monthly",
     "unit": "flat",
-    "source": "https://speechify.com/pricing",
-    "checkedOn": "2026-07-31",
-    "confidence": "medium",
-    "notes": "Annual Premium price divided by 12; monthly billing is higher.",
-    "native": "11.58 USD",
+    "source": "https://speechify.com/pricing/",
+    "checkedOn": "2026-08-10",
+    "confidence": "high",
+    "notes": "Official monthly rate; annual billing is discounted.",
+    "native": "29 USD",
     "kind": "fixed",
-    "currency": "USD"
+    "currency": "USD",
+    "freeTier": "The free plan reads text aloud at up to 1.5x speed with 10 basic voices.",
+    "tiers": [
+      {
+        "name": "Free",
+        "monthly": 0,
+        "annualPerMonth": 0,
+        "per": "flat",
+        "limits": "10 robotic voices; listening up to 1.5× speed; text-to-speech only; current pricing page publishes no word/time cap.",
+        "notes": null
+      },
+      {
+        "name": "Premium",
+        "monthly": 29,
+        "annualPerMonth": 11.58,
+        "per": "flat",
+        "limits": "1,000+ natural voices; 60+ languages; up to 5× listening speed; scan/listen, AI summaries/chat, cloud-drive integrations.",
+        "notes": "Annual total is $139."
+      },
+      {
+        "name": "Enterprise & EDU",
+        "monthly": null,
+        "annualPerMonth": null,
+        "per": "user",
+        "limits": "Custom users, administration, accessibility deployment, and support.",
+        "notes": "Custom price."
+      }
+    ],
+    "freeTierCaps": "10 robotic voices; 1.5× speed; text-to-speech only; no fixed word/time cap published on the current pricing page",
+    "billingTerms": "monthly + annual (-60% advertised for annual); Enterprise/EDU is custom",
+    "priceChanges": [],
+    "hiddenCosts": "Speechify Studio, creator voiceover/dubbing, and API usage are separate products/subscriptions and are not included in Reader Premium. Refunds are tightly limited and app-store pricing can differ.",
+    "tiersCheckedOn": "2026-08-12",
+    "tiersSources": [
+      "https://speechify.com/pricing/",
+      "https://speechify.com/blog/is-speechify-free-for-students/",
+      "https://speechify.com/refund-policy/"
+    ]
   },
-  "verdict": "no",
+  "verdict": "kinda",
   "verdictConfidence": "high",
-  "verdictSummary": "A consolation build is possible, but the paid product's decisive value sits outside a solo rebuild. For Speechify, read user-supplied documents aloud with a local TTS engine. The hard boundary is high-quality voice catalog, ocr, mobile capture, cross-device sync, and publisher partnerships, plus models, compute, rights, and safety operations.",
-  "coreLoopDIY": "Read user-supplied documents aloud with a local TTS engine, label outputs as synthetic, and retain provenance for every generated file.",
-  "diyTimeEstimate": "closest consolation build: one sitting",
+  "verdictSummary": "Speechify's core reading loop is a weekend build: import documents, extract text, read it aloud with a natural local voice, highlight the current sentence, and save progress. The gap is product depth, including the size and consistency of Speechify's hosted voice catalog, OCR and mobile capture, cross-device sync, cloud-drive integrations, voice typing, AI podcasts, and document chat.",
+  "coreLoopDIY": "Import text, PDFs, EPUBs, and web pages, extract their readable text, then play it through a local neural TTS engine with highlighting, speed controls, and saved progress.",
+  "diyTimeEstimate": "weekend project",
   "requirements": [
-    "local TTS model",
-    "ffmpeg",
-    "GPU recommended",
-    "voices the user has rights and consent to use"
+    "Node.js 22",
+    "local OpenAI-compatible Kokoro TTS server",
+    "PDF, EPUB, and OCR parsing libraries"
   ],
   "whatYouLose": [
-    "high-quality voice catalog, OCR, mobile capture, cross-device sync, and publisher partnerships",
-    "frontier voice or avatar model",
-    "licensed voice catalog",
-    "real-time rendering fleet",
-    "moderation, consent verification, and enterprise rights"
+    "Speechify's 1000+ hosted voices and consistent quality across devices",
+    "mobile scanning and polished OCR capture",
+    "cross-device sync and offline native apps",
+    "Google Drive, Dropbox, and OneDrive integrations",
+    "voice typing, AI podcasts, and document chat"
   ],
   "moatTags": [
+    "execution-polish",
     "proprietary-models",
-    "content-rights",
-    "scale-infra"
+    "integrations"
   ],
-  "moatNotes": "models, compute, rights, and safety operations",
-  "replacementScope": "clearly labeled local synthetic-media tool",
-  "ongoingBurden": "model licensing, consent records, impersonation risk, watermarking, GPU queues, media storage, abuse response, and rapid model changes",
-  "whyPeopleStillPay": "People still pay for Speechify because customers pay for output quality, production speed, licensed voices, consent workflows, and a provider that carries the operational risk. The recurring cost buys model licensing, consent records, impersonation risk, watermarking, GPU queues, media storage, abuse response, and rapid model changes, not just the visible interface.",
+  "moatNotes": "large hosted voice catalog, OCR, sync, mobile apps, and cloud-drive integrations",
+  "replacementScope": "local document reader with text-to-speech",
+  "ongoingBurden": "document parser compatibility, OCR accuracy, local model setup, hardware performance, browser changes, and optional sync",
+  "whyPeopleStillPay": "People still pay for Speechify because it turns many document formats into reliable audio across phones, browsers, and desktops without setup. The subscription buys polished capture, a larger ready-to-use voice catalog, sync, integrations, and the newer voice and AI workflows around the reader.",
   "priorArt": [
+    {
+      "name": "Kokoro",
+      "url": "https://github.com/hexgrad/kokoro",
+      "desc": "Apache-licensed local neural TTS model with natural voices and CPU-friendly inference."
+    },
     {
       "name": "Piper",
       "url": "https://github.com/OHF-Voice/piper1-gpl",
@@ -54,6 +95,21 @@
     }
   ],
   "alternatives": [
+    {
+      "name": "OpenReader",
+      "url": "https://openreader.richardr.dev/",
+      "type": "open-source",
+      "repo": "https://github.com/richardr1126/openreader",
+      "platforms": [
+        "web",
+        "self-hosted"
+      ],
+      "desc": "The direct answer: documents in, natural local narration out, with synchronized highlighting and no listening meter.",
+      "stars": 491,
+      "lastCommit": "2026-08",
+      "selfHost": "docker",
+      "checkedOn": "2026-08-10"
+    },
     {
       "name": "Balabolka",
       "url": "https://www.cross-plus-a.com/balabolka.htm",
@@ -66,7 +122,24 @@
       "stars": null,
       "lastCommit": null,
       "selfHost": "one-click",
-      "checkedOn": "2026-08-06"
+      "checkedOn": "2026-08-06",
+      "facts": {
+        "license": "proprietary-free",
+        "runs": "local",
+        "install": "Run the Windows installer or unzip the portable build",
+        "engines": "Microsoft Speech API 4/5 and Microsoft Speech Platform voices installed on Windows; an optional separate utility can call online TTS services",
+        "dataFormat": "Input documents and generated WAV, MP3, MP4, OGG or WMA audio plus optional LRC/SRT files on local disk",
+        "gapVsPaid": "It is Windows-only and lacks Speechify's mobile/browser sync, OCR capture and polished voice catalog.",
+        "setupBlocker": "Balabolka includes no voices, so the desired Windows SAPI voice or language pack must already be installed",
+        "sources": [
+          "https://www.cross-plus-a.com/balabolka.htm",
+          "https://www.cross-plus-a.com/voice.htm",
+          "https://www.cross-plus-a.com/bportable.htm",
+          "https://www.cross-plus-a.com/bfaq.htm",
+          "https://speechify.com/"
+        ],
+        "checkedOn": "2026-08-11"
+      }
     },
     {
       "name": "Koodo Reader",
@@ -83,7 +156,25 @@
       "stars": 27800,
       "lastCommit": "2026-08",
       "selfHost": "one-click",
-      "checkedOn": "2026-08-06"
+      "checkedOn": "2026-08-06",
+      "facts": {
+        "license": "AGPL-3.0",
+        "runs": "local",
+        "install": "Install a desktop/mobile package from the site or app store; Windows also offers portable builds",
+        "engines": "Free read-aloud uses the operating-system TTS engine or browser voices; Koodo's hosted AI voice is a paid Pro feature",
+        "dataFormat": "Books, covers, configuration, progress and annotations in a local library folder/app data or browser cache; free users do not upload reading data",
+        "gapVsPaid": "It is built around ebooks rather than Speechify's scan-anything, browser and cross-device listening workflow.",
+        "setupBlocker": "The macOS desktop build may need Open Anyway, while Linux read-aloud depends on a working system or browser speech engine",
+        "sources": [
+          "https://www.koodoreader.com/en",
+          "https://www.koodoreader.com/en/document",
+          "https://www.koodoreader.com/en/faq",
+          "https://github.com/koodo-reader/koodo-reader",
+          "https://github.com/koodo-reader/koodo-reader/blob/master/LICENSE",
+          "https://speechify.com/"
+        ],
+        "checkedOn": "2026-08-11"
+      }
     },
     {
       "name": "Readest",
@@ -102,7 +193,26 @@
       "stars": 23100,
       "lastCommit": "2026-08",
       "selfHost": "one-click",
-      "checkedOn": "2026-08-06"
+      "checkedOn": "2026-08-06",
+      "facts": {
+        "license": "AGPL-3.0-or-later",
+        "runs": "both",
+        "install": "Install from an app store, the site/GitHub releases or Flathub, or use the hosted web app",
+        "engines": "Native OS TTS on Android/iOS, Web Speech API in the web app, and Microsoft Edge TTS cloud voices on supported platforms",
+        "dataFormat": "A local app library/cache plus optional Readest Cloud sync for books, progress, highlights and notes; exportable library backup ZIP; credentials can be end-to-end encrypted",
+        "gapVsPaid": "Its strongest use is book reading, while desktop TTS and OCR are less complete than Speechify's.",
+        "setupBlocker": "Desktop native voices are not yet wired up, so desktop users need Edge TTS or browser voices; Windows may also need WebView2",
+        "sources": [
+          "https://readest.com/",
+          "https://github.com/readest/readest",
+          "https://github.com/readest/readest/blob/main/LICENSE",
+          "https://readest.com/docs/listen",
+          "https://readest.com/docs/sync",
+          "https://readest.com/docs/advanced",
+          "https://speechify.com/"
+        ],
+        "checkedOn": "2026-08-11"
+      }
     },
     {
       "name": "Thorium Reader",
@@ -118,18 +228,38 @@
       "stars": 2814,
       "lastCommit": "2026-08",
       "selfHost": "one-click",
-      "checkedOn": "2026-08-06"
+      "checkedOn": "2026-08-06",
+      "facts": {
+        "license": "BSD-3-Clause",
+        "runs": "local",
+        "install": "Install from Microsoft Store or use the official Windows installer, macOS build, AppImage or Debian package",
+        "engines": "Operating-system text-to-speech voices selected according to the publication's language",
+        "dataFormat": "Imported publications in Thorium's local application-data publications directory; bookmarks/highlights in local state and a dedicated SQLite notes database in recent versions",
+        "gapVsPaid": "It has no PDF read-aloud and no Speechify-style mobile cloud library or OCR capture.",
+        "setupBlocker": "A corresponding operating-system voice pack must be installed for any missing language",
+        "sources": [
+          "https://thorium.edrlab.org/en/",
+          "https://thorium.edrlab.org/en/th3/100_quickstart/",
+          "https://thorium.edrlab.org/en/th3/400_resources/430_faq/",
+          "https://github.com/edrlab/thorium-reader",
+          "https://github.com/edrlab/thorium-reader/blob/develop/LICENSE",
+          "https://github.com/edrlab/thorium-reader/releases",
+          "https://speechify.com/"
+        ],
+        "checkedOn": "2026-08-11"
+      }
     }
   ],
   "rejectedAlternatives": [],
   "relatedSlugs": [
-    "synthesia",
-    "heygen",
-    "playht"
+    "naturalreader",
+    "readwise-reader",
+    "matter",
+    "yaps"
   ],
   "pagePriority": 5,
   "verifiedOneShot": false,
-  "notes": "Editorial comparison targets the Premium plan and a clearly labeled local synthetic-media tool DIY substitute. Recheck price before merge.",
-  "prompt": "Build a closest honest personal substitute for Speechify in an empty repository.\nUse Python 3.12, FastAPI, SQLite, ffmpeg, and a user-owned local TTS model; do not offer alternative stacks.\nThe core loop is: read user-supplied documents aloud with a local TTS engine, label outputs as synthetic, and retain provenance for every generated file.\nMake the first run work locally with one documented command.\nStore all user data locally by default and make export straightforward.\nPut secrets in .env, ship .env.example, and never commit credentials.\nRequire a project-level rights and consent acknowledgement before generating audio.\nShip with no celebrity, public-figure, or scraped voice assets and accept only explicitly licensed models.\nGenerate speech from text with voice, speed, pause, pronunciation, and segment controls.\nCreate a timeline for audio, captions, uploaded visuals, and simple transitions.\nEmbed project metadata and a visible synthetic-media disclosure in exported assets.\nStore prompts, model identifiers, consent notes, and output hashes in a local provenance log.\nInclude clear empty, loading, success, and recoverable error states.\nAdd input validation, safe filenames, and graceful handling of unavailable APIs.\nWrite focused tests for the core transformation and one end-to-end happy path.\nCreate a README with setup, architecture, permissions, data location, and backup steps.\nDo not add accounts, billing, telemetry, analytics, or a hosted control plane.\nDo not claim to reproduce proprietary data, network liquidity, regulated access, or frontier infrastructure.\nDeliberately leave out cloning a voice without clear consent.\nDeliberately leave out impersonation or deceptive unlabeled media.\nDeliberately leave out a frontier avatar model, public hosting, or enterprise rights clearance.\nFinish by running the tests and listing the exact commands used.",
-  "promptCurated": false
+  "notes": "OpenReader with local Kokoro can replace the core reading workflow; the comparison targets the monthly Premium reader plan, not Speechify Studio.",
+  "prompt": "Build a local-first personal document reader that covers Speechify's core loop.\nUse Node.js 22, Express, better-sqlite3, and vanilla browser JavaScript; do not offer alternative stacks.\nServe only on 127.0.0.1 by default and require no account.\nImport pasted text and TXT, Markdown, HTML, PDF, EPUB, PNG, and JPEG files.\nUse Mozilla Readability for HTML, PDF.js for PDFs, epub.js for EPUBs, and Tesseract.js for image OCR.\nNormalize extracted content into chapters and paragraphs while preserving headings.\nSend sentence-sized chunks to a local OpenAI-compatible Kokoro TTS server and cache the returned audio.\nLet the user choose a local voice, playback rate, and volume per document.\nHighlight the current sentence and scroll it into view as its audio plays.\nAdd play, pause, stop, sentence skip, chapter skip, and click-any-paragraph to start.\nSave document metadata, extracted text, current position, and reading settings in SQLite.\nBuild a library with recent documents, progress, search, delete, and plain-text export.\nAccept public webpage URLs only after blocking loopback, private, link-local, and non-HTTP addresses, including redirects.\nKeep uploaded files and extracted text local; make no cloud calls except a URL the user asks to import.\nDo not require a hosted speech API or an API key.\nInclude clear empty, extracting, ready, playing, paused, and recoverable error states.\nReject oversized or unsupported uploads and use safe generated filenames.\nWrite focused tests for each parser, saved reading position, and blocked private-network URLs.\nAdd one end-to-end test that imports a document, starts playback, and resumes its saved position.\nCreate a README with setup, supported formats, data location, backup, deletion, and test commands.\nDo not add accounts, billing, telemetry, analytics, or public hosting.\nDeliberately leave out mobile apps, cross-device sync, Speechify's hosted voice catalog, voice cloning, voice typing, AI podcasts, and document chat.\nFinish by running the tests and listing the exact commands used.",
+  "promptCurated": true
 }

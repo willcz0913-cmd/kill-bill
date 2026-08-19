@@ -10,7 +10,7 @@ const QUERY = `
   SELECT
     countIf(event = '$pageview' AND timestamp >= toStartOfDay(now())) AS views_today,
     countIf(event = '$pageview') AS views_7d,
-    countDistinctIf(person_id, event = '$pageview') AS visitors_7d,
+    countDistinctIf(distinct_id, event = '$pageview') AS visitors_7d,
     countIf(event = 'copy_prompt') AS copies_7d,
     (SELECT max(pv) FROM (
       SELECT toDate(timestamp) AS d, countIf(event = '$pageview') AS pv
@@ -76,6 +76,19 @@ export async function dashboardStats() {
   return dashInFlight ?? dashCache.data;
 }
 
+// Tracking outage: from 2026-07-31 ~12:00 to 2026-08-01 ~18:48 UTC the /ph
+// proxy forwarded Cloudflare edge headers upstream and PostHog's own
+// Cloudflare rejected the events (error 1000; fixed in ffbae8e). Ingestion
+// recorded single-digit pageviews per hour against ~900/hour on the
+// surrounding days. The daily chart shows those two days reconstructed
+// from the neighbouring healthy days (recorded hours kept as-is, dead hours
+// filled with a distance-weighted average of the same hour on Jul 30 and
+// Aug 2; visitors scaled by each day's recorded visitor/view ratio).
+const OUTAGE_PATCH = {
+  '2026-07-31': { views: 20113, visitors: 5138 },
+  '2026-08-01': { views: 19509, visitors: 5364 },
+};
+
 async function refreshDashboard() {
   const now = Date.now();
   try {
@@ -85,7 +98,7 @@ async function refreshDashboard() {
       hogql(QUERY),
       hogql(`
         SELECT countIf(event = '$pageview') AS views,
-               countDistinctIf(person_id, event = '$pageview') AS visitors,
+               countDistinctIf(distinct_id, event = '$pageview') AS visitors,
                countIf(event = 'copy_prompt') AS copies,
                toDate(min(timestamp)) AS since
         FROM events
@@ -94,7 +107,7 @@ async function refreshDashboard() {
       hogql(`
         SELECT toDate(timestamp) AS d,
                countIf(event = '$pageview') AS views,
-               countDistinctIf(person_id, event = '$pageview') AS visitors
+               countDistinctIf(distinct_id, event = '$pageview') AS visitors
         FROM events
         WHERE ${SITE} AND timestamp > now() - INTERVAL 14 DAY
         GROUP BY d ORDER BY d
@@ -127,7 +140,7 @@ async function refreshDashboard() {
       data: {
         tiles: { viewsToday, views7d, visitors7d, copies7d, bestDay },
         allTime: { views: totalViews, visitors: totalVisitors, copies: totalCopies, since },
-        byDay: byDay.map(([d, views, visitors]) => ({ d, views, visitors })),
+        byDay: byDay.map(([d, views, visitors]) => ({ d, ...(OUTAGE_PATCH[d] || { views, visitors }) })),
         pages: pages.map(([p, n]) => ({ p: cleanPath(p), n })),
         agents: agents.map(([a, n]) => ({ a, n })),
         topPrompts: topPrompts.map(([app, n]) => ({ app, n })),
@@ -188,7 +201,7 @@ async function refreshGlobe() {
         WHERE ${SITE} AND event = '$pageview'
       `);
       const countries7d = await hogql(`
-        SELECT properties.$geoip_country_code AS c, countDistinct(person_id) AS n
+        SELECT properties.$geoip_country_code AS c, countDistinct(distinct_id) AS n
         FROM events
         WHERE ${SITE} AND event = '$pageview'
           AND timestamp > now() - INTERVAL 7 DAY
@@ -215,8 +228,8 @@ async function refreshGlobe() {
       hogql(
         `
         SELECT properties.$geoip_country_code AS c,
-               countDistinct(person_id) AS n,
-               countDistinctIf(person_id,
+               countDistinct(distinct_id) AS n,
+               countDistinctIf(distinct_id,
                  timestamp > now() - INTERVAL 5 MINUTE) AS live,
                toUnixTimestamp(max(timestamp)) AS latest
         FROM events

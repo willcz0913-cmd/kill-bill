@@ -322,56 +322,134 @@ export const SELF_HOST_LABELS = {
   ops: 'self-host, real ops',
 };
 
-// Sitemap staging (decided 2026-08-06): a young domain shouldn't push all 350+
-// new pages at a search engine at once. The named slugs are the low-competition,
-// high-volume targets; the rest of the ~30 fill up by editorial weight. ALL
-// alternatives pages must join the sitemap ~6-8 weeks after launch.
-const ALT_SITEMAP_PRIORITY = [
-  'zapier', 'loom', 'calendly', 'intercom', 'grammarly',
-  'notion', 'mailchimp', 'docusign', 'typeform', '1password',
-  // 2026-08-07: the AI builder tools themselves, all low competition.
-  'replit', 'cursor', 'lovable', 'v0', 'bolt-new', 'windsurf',
-];
-const ALT_SITEMAP_LIMIT = 30;
+// ---- the inverted axis: one free product → every paid app it replaces ----
+// Grouped by slugified product NAME, because the same product shows up under
+// URL variants across app files (frappe.io/erpnext vs erpnext.com, cryptpad.fr
+// vs cryptpad.org). The one real name clash in the data (Titanium's OnyX mac
+// utility vs onyx.app) is split by host below.
+const PRODUCT_SLUG_BY_HOST = new Map([['www.onyx.app', 'onyx-app'], ['onyx.app', 'onyx-app']]);
 
+// A product earns a page once it replaces 2+ paid apps; below that the app's
+// own alternatives page already tells the whole story.
+export const ALT_PRODUCT_PAGE_MIN = 2;
+
+export function productSlug(name, url) {
+  try {
+    const host = new URL(url).hostname;
+    if (PRODUCT_SLUG_BY_HOST.has(host)) return PRODUCT_SLUG_BY_HOST.get(host);
+  } catch {}
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+let productCache;
+
+export function alternativeProducts() {
+  if (productCache) return productCache;
+  const groups = new Map();
+  for (const app of allApps()) {
+    for (const alt of app.alternatives ?? []) {
+      const slug = productSlug(alt.name, alt.url);
+      if (!groups.has(slug)) groups.set(slug, []);
+      groups.get(slug).push({ app, alt });
+    }
+  }
+  const mode = (vals) => {
+    const c = new Map();
+    for (const v of vals) if (v != null) c.set(v, (c.get(v) ?? 0) + 1);
+    return [...c.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  };
+  productCache = [...groups.entries()]
+    .map(([slug, entries]) => {
+      const alts = entries.map((e) => e.alt);
+      // one pairing per app (URL variants can put the same app in twice)
+      const seen = new Set();
+      const pairings = entries
+        .filter(({ app }) => !seen.has(app.slug) && seen.add(app.slug))
+        .map(({ app, alt }) => ({ app, desc: alt.desc, gapVsPaid: alt.facts?.gapVsPaid ?? null }))
+        .sort((a, b) => (b.app.priceMonthly ?? 0) - (a.app.priceMonthly ?? 0));
+      // discontinued apps stay in the list as post-mortems but don't count as
+      // money the product currently replaces
+      const spendMonthly = Math.round(
+        pairings.reduce((s, p) => s + (!p.app.discontinued && p.app.priceMonthly != null ? p.app.priceMonthly : 0), 0)
+      );
+      const facts = alts
+        .filter((a) => a.facts)
+        .map((a) => a.facts)
+        .sort((a, b) => (b.checkedOn ?? '').localeCompare(a.checkedOn ?? ''))[0] ?? null;
+      return {
+        slug,
+        name: mode(alts.map((a) => a.name)),
+        url: mode(alts.map((a) => a.url)),
+        type: alts.some((a) => a.type === 'open-source') ? 'open-source' : 'free',
+        repo: mode(alts.map((a) => a.repo)),
+        stars: alts.some((a) => a.stars != null) ? Math.max(...alts.map((a) => a.stars ?? 0)) : null,
+        lastCommit: alts.map((a) => a.lastCommit).filter(Boolean).sort().at(-1) ?? null,
+        platforms: [...new Set(alts.flatMap((a) => a.platforms ?? []))],
+        selfHost: mode(alts.map((a) => a.selfHost)),
+        checkedOn: alts.flatMap((a) => [a.checkedOn, a.facts?.checkedOn]).filter(Boolean).sort().at(-1),
+        category: mode(pairings.map((p) => p.app.category)),
+        facts,
+        pairings,
+        spendMonthly,
+      };
+    })
+    .sort((a, b) => b.pairings.length - a.pairings.length || (b.stars ?? 0) - (a.stars ?? 0));
+  return productCache;
+}
+
+export function productsWithPage() {
+  return alternativeProducts().filter((p) => p.pairings.length >= ALT_PRODUCT_PAGE_MIN);
+}
+
+export function getProduct(slug) {
+  return alternativeProducts().find((p) => p.slug === slug);
+}
+
+// For the alt cards: link an entry to its product page when one exists.
+let productLinkCache;
+export function productPageLink(name, url) {
+  if (!productLinkCache) {
+    productLinkCache = new Map(productsWithPage().map((p) => [p.slug, p.pairings.length]));
+  }
+  const slug = productSlug(name, url);
+  const count = productLinkCache.get(slug);
+  return count ? { slug, count } : null;
+}
+
+// Sitemap stage 2 (2026-08-15): every product page is in the sitemap.
+export function productsSitemap() {
+  return productsWithPage();
+}
+
+// Where the free thing actually runs, for the verified fact block.
+export const FACT_RUNS_LABELS = {
+  local: 'on your machine',
+  cloud: 'their cloud',
+  both: 'your machine or their cloud',
+  'self-hosted': 'your server',
+};
+
+// SPDX ids stay as-is; the LicenseRef- and -only/-or-later plumbing is noise
+// to a reader deciding whether the thing is actually open.
+export function formatLicense(license) {
+  if (license == null) return null;
+  if (license === 'proprietary-free') return 'proprietary, free';
+  return license
+    .replace(/^LicenseRef-/, '')
+    .replace(/-only$/, '')
+    .replace(/-or-later$/, '+')
+    .replace(/(?<=[a-zA-Z])-(?=[A-Za-z][a-z])/g, ' ');
+}
+
+// Sitemap stage 2 (2026-08-15): the launch staging (top 30 by editorial
+// weight, decided 2026-08-06) is over; every alternatives page is listed.
 export function alternativesSitemapApps() {
-  const eligible = appsWithAlternativesPage();
-  const named = ALT_SITEMAP_PRIORITY.map((s) => eligible.find((a) => a.slug === s)).filter(Boolean);
-  const rest = eligible
-    .filter((a) => !named.includes(a))
-    .sort(
-      (x, y) =>
-        y.pagePriority - x.pagePriority || y.alternatives.length - x.alternatives.length
-    );
-  return [...named, ...rest].slice(0, ALT_SITEMAP_LIMIT);
+  return appsWithAlternativesPage();
 }
 
 export function formatStars(n) {
   if (n == null) return null;
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
-}
-
-// A reader-submitted alternative (an app_submissions row) shaped for <AltCard>.
-// These never pass through the build-time icon fetch, so the logo comes live
-// from the domain's favicon; links render nofollow ugc and there's no star,
-// platform or repo data, so the card degrades to name + one line + "$0".
-export function communityAlt(sub) {
-  let host = null;
-  try {
-    host = new URL(sub.url).hostname.replace(/^www\./, '');
-  } catch {
-    /* the submit handler already rejected non-http(s) urls */
-  }
-  return {
-    name: sub.name,
-    url: sub.url,
-    desc: sub.pitch || 'Reader-submitted free alternative.',
-    type: 'free',
-    community: true,
-    logo: host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64` : null,
-    stars: null,
-    platforms: [],
-  };
 }
 
 // "2026-07" → "jul 2026", for the activity signal on alternative cards.
