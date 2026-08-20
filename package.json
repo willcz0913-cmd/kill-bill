@@ -13,7 +13,7 @@
     "validate": "node scripts/validate-apps.mjs"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "22.x"
   },
   "overrides": {
     "better-sqlite3": "$better-sqlite3"
