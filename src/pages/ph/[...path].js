@@ -2,8 +2,12 @@
    on a plain VPS: /ph/static/* → assets host, everything else → ingest host.
    Exists so analytics stays same-origin when the app runs on a PaaS where we
    don't control the front proxy. */
-const INGEST = 'https://eu.i.posthog.com';
-const ASSETS = 'https://eu-assets.i.posthog.com';
+// Cluster region follows POSTHOG_UI_HOST: a us.posthog.com dashboard means a
+// US project, whose token only resolves on the US ingest/assets hosts. Default
+// EU when unset so existing deploys keep their behaviour.
+const REGION = (process.env.POSTHOG_UI_HOST || '').includes('us.') ? 'us' : 'eu';
+const INGEST = `https://${REGION}.i.posthog.com`;
+const ASSETS = `https://${REGION}-assets.i.posthog.com`;
 
 async function proxy({ params, request, clientAddress }) {
   const path = params.path ? `/${params.path}` : '/';
