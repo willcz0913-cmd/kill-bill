@@ -13,10 +13,15 @@ const paymentId =
 let purchase = token ? await purchaseByToken(token) : null;
 
 /* The webhook and this redirect race each other. Asking Dodo directly settles
-   it: same conditional update, so whoever gets here second changes nothing. */
+   it: same conditional update, so whoever gets here second changes nothing.
+   notify: true so the "finish your card" email goes out even when this page
+   wins the race (it usually does — Dodo redirects here instantly). The
+   conditional update keeps it to exactly one email: the loser's `changed` is
+   false and it never reaches the send. Without this, a buyer who closes the tab
+   before the webhook lands is left with no copy of their details link. */
 if (purchase && (purchase.status === 'hold' || purchase.status === 'expired_hold') && paymentId) {
   try {
-    const promoted = await promoteFromSession(await getPayment(paymentId));
+    const promoted = await promoteFromSession(await getPayment(paymentId), { notify: true });
     if (promoted && promoted.id === purchase.id) purchase = promoted;
   } catch (err) {
     console.error(`sponsor details payment lookup failed: ${err?.message || err}`);

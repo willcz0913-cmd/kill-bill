@@ -193,8 +193,10 @@ export async function reconcileLinkSession(session) {
    by the details page off its own session lookup. The conditional update is
    what makes that safe: whichever arrives second changes nothing.
 
-   `notify` sends the "finish your card" email. The webhook sets it; the details
-   page doesn't, because that visitor is already looking at the form. */
+   `notify` sends the "finish your card" email. Both the webhook and the details
+   page set it, so the buyer gets the link by email whichever wins the race — a
+   closed tab is never the only copy. The conditional update above keeps it to
+   one email: only the caller whose update flips hold→paid reaches the send. */
 export async function promoteFromSession(session, { notify = false } = {}) {
   if (!session) return null;
   const id = session.metadata?.purchase_id || session.client_reference_id;
