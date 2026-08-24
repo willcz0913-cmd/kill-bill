@@ -319,6 +319,29 @@ const mediaOn = r2Configured();
     min-height: 120px;
   }
 
+  /* Failed-submit validation: when the maker hits post with required fields
+     still empty, each one flags red until they edit it (JS adds/strips
+     .bp-invalid). The "no" verdict red reads as an error, not brand green.
+     Border-color only (the controls already carry a 1px border) so nothing
+     reflows; the chips row has no border of its own, so it uses an outline. */
+  .bp-field.bp-invalid > .bp-flabel {
+    color: var(--no-bg);
+  }
+
+  .bp-field.bp-invalid > input,
+  .bp-field.bp-invalid > textarea,
+  .bp-field.bp-invalid .bp-combo > input,
+  .bp-drop.bp-invalid {
+    border-color: var(--no-bg);
+    background: color-mix(in srgb, var(--no-bg) 6%, transparent);
+  }
+
+  .bp-chips.bp-invalid {
+    outline: 1px solid var(--no-bg);
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
   .bp-field > textarea::-webkit-scrollbar {
     width: 9px;
   }

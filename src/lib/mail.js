@@ -197,8 +197,8 @@ export function brandShell(body) {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:4px 0 30px 0;">
-                    <span style="display:inline-block; vertical-align:middle; width:30px; height:30px; line-height:28px; border:3px solid #0e9c47; border-radius:8px; text-align:center; ${MONO} font-size:18px; font-weight:700; color:#0e9c47;">?|</span>
-                    <span style="display:inline-block; vertical-align:middle; margin-left:10px; ${MONO} font-size:17px; font-weight:500; color:#111111;">can<span style="color:#0e9c47;">i</span>vibecode<span style="color:#0e9c47;">it</span></span>
+                    <span style="display:inline-block; vertical-align:middle; width:30px; height:30px; line-height:28px; border:3px solid #0b7c39; border-radius:8px; text-align:center; ${MONO} font-size:18px; font-weight:700; color:#0b7c39;">&times;|</span>
+                    <span style="display:inline-block; vertical-align:middle; margin-left:10px; ${MONO} font-size:17px; font-weight:500; color:#14170f;">kill<span style="color:#0b7c39;">bill</span></span>
                   </td>
                 </tr>
               </table>

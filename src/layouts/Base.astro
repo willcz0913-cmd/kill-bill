@@ -107,7 +107,11 @@ const blocks = [orgLd, ...jsonld];
           <a href="/alternatives">alternatives</a>
           {buildsLive() && <a class="nav-builds" href="/builds">builds</a>}
           <a href="/stats">stats</a>
-          <a class="nav-submit" href="/submit">submit an app</a>
+          {buildsLive() ? (
+            <a class="nav-submit" href="/post-a-build">post a build</a>
+          ) : (
+            <a class="nav-submit" href="/submit">submit an app</a>
+          )}
           <a href="/sponsor">sponsor</a>
           {
             user ? (

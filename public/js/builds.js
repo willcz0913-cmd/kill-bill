@@ -364,6 +364,7 @@
     const brokeField = $('[data-bd-brokefield]');
     const brokeLabel = $('[data-bd-brokelabel]');
     const linkHint = $('[data-bd-linkhint]');
+    const goesChips = $('[data-bd-goes]');
     const syncGoes = () => {
       const g = state.goes;
       $$('[data-bd-goes] .bp-chip').forEach((b) =>
@@ -397,6 +398,7 @@
     $$('[data-bd-goes] .bp-chip').forEach((btn) =>
       btn.addEventListener('click', () => {
         state.goes = btn.dataset.goes;
+        goesChips?.classList.remove('bp-invalid');
         syncGoes();
         saveDraft();
       })
@@ -425,6 +427,7 @@
     const dropZone = $('.bp-drop');
     const shotCount = () => state.media.length + state.pendingFiles.length;
     const syncDropline = () => {
+      if (shotCount()) dropZone?.classList.remove('bp-invalid');
       const line = $('[data-bd-dropline]');
       if (!line) return;
       line.textContent = shotCount()
@@ -507,6 +510,13 @@
     /* The post itself. */
     const form = $('#bp-form');
     const postError = $('[data-bd-post-error]');
+    // Required-field containers, flagged red on a failed submit (see below).
+    const nameField = $('#bp-name')?.closest('.bp-field');
+    const oneLinerField = $('#bp-oneliner')?.closest('.bp-field');
+    const toolField = $('#bp-tool')?.closest('.bp-field');
+    const handleField = $('#bp-handle')?.closest('.bp-field');
+    const demoField = $('#bp-demo')?.closest('.bp-field');
+    const repoField = $('#bp-repo')?.closest('.bp-field');
     const fail = (msg) => {
       postError.textContent = msg;
       postError.hidden = false;
@@ -533,30 +543,48 @@
         media: state.media.map((m) => m.id),
         website: form.elements.website.value,
       };
-      if (payload.name.trim().length < 2) return fail('give the build a name.');
-      if (payload.one_liner.trim().length < 5) return fail('one line on what it does.');
-      if (!state.goes) return fail('how many goes did it take?');
-      if ((state.goes === 'one' || state.goes === 'few') && payload.prompt.trim().length < 10) {
-        return fail("paste the prompt, exactly as sent · it's the whole point.");
+      // Validate every required field up front and flag them all at once, so
+      // one submit shows everything that's missing, not just the first gap.
+      $$('.bp-invalid').forEach((el) => el.classList.remove('bp-invalid'));
+      const invalid = [];
+      const need = (ok, el, msg, also) => {
+        if (!ok) invalid.push({ el, msg, also });
+      };
+      need(payload.name.trim().length >= 2, nameField, 'give the build a name.');
+      need(payload.one_liner.trim().length >= 5, oneLinerField, 'one line on what it does.');
+      need(Boolean(state.goes), goesChips, 'how many goes did it take?');
+      if (state.goes === 'one' || state.goes === 'few') {
+        need(payload.prompt.trim().length >= 10, promptField, "paste the prompt, exactly as sent · it's the whole point.");
       }
-      if (state.goes === 'weeks' && payload.story.trim().length < 10) {
-        return fail('say what actually got it done.');
+      if (state.goes === 'weeks') {
+        need(payload.story.trim().length >= 10, storyField, 'say what actually got it done.');
       }
-      if (payload.where_broke.trim().length < 3) {
-        return fail('one line on where it broke · "nowhere yet" counts.');
-      }
-      if (!payload.tool.trim()) return fail('name the tool you built it with.');
+      need(payload.where_broke.trim().length >= 3, brokeField, 'one line on where it broke · "nowhere yet" counts.');
+      need(payload.tool.trim().length > 0, toolField, 'name the tool you built it with.');
       const handleInput = $('#bp-handle');
       if (handleInput) {
         payload.handle = handleInput.value.trim();
-        if (!/^[a-z0-9][a-z0-9_-]{2,19}$/i.test(payload.handle)) {
-          return fail('pick a handle: 3-20 letters, numbers, dashes.');
-        }
+        need(/^[a-z0-9][a-z0-9_-]{2,19}$/i.test(payload.handle), handleField, 'pick a handle: 3-20 letters, numbers, dashes.');
       }
-      if (state.goes !== 'never' && !payload.demo_url.trim() && !payload.repo_url.trim()) {
-        return fail('a build needs a live demo or a public repo, ideally both.');
+      if (state.goes !== 'never') {
+        // "one of the two": flag both link fields, either one clears both.
+        need(Boolean(payload.demo_url.trim() || payload.repo_url.trim()), demoField, 'a build needs a live demo or a public repo, ideally both.', repoField);
       }
-      if (!state.media.length) return fail('add at least one screenshot of the thing you built.');
+      need(state.media.length > 0, dropZone, 'add at least one screenshot of the thing you built.');
+
+      if (invalid.length) {
+        invalid.forEach((v) => {
+          v.el?.classList.add('bp-invalid');
+          v.also?.classList.add('bp-invalid');
+        });
+        fail(invalid.length === 1 ? invalid[0].msg : 'fill the highlighted fields to post.');
+        const first = invalid[0].el;
+        first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (first?.matches('input, textarea')
+          ? first
+          : first?.querySelector('input, textarea, .bp-chip'))?.focus?.();
+        return;
+      }
       $('#bp-go').disabled = true;
       try {
         const res = await jsonPost('/api/build', 'POST', payload);
@@ -572,6 +600,16 @@
 
     /* Every keystroke keeps the draft current (cheap: one JSON stringify). */
     form?.addEventListener('input', saveDraft);
+
+    /* A field flagged by a failed submit clears the moment it's edited. The
+       demo/repo pair is "one of two", so filling either clears both. */
+    form?.addEventListener('input', (e) => {
+      e.target.closest('.bp-field, .bp-drop')?.classList.remove('bp-invalid');
+      if (e.target.id === 'bp-demo' || e.target.id === 'bp-repo') {
+        demoField?.classList.remove('bp-invalid');
+        repoField?.classList.remove('bp-invalid');
+      }
+    });
 
     /* Prefill from the query string (?app=…). */
     const preApp = wrap.dataset.preselectApp;
