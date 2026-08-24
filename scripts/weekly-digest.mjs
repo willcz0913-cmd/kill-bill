@@ -565,7 +565,7 @@ function render(data, copy, icons) {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:4px 0 14px 0;">
-                    <span style="display:inline-block; vertical-align:middle; width:30px; height:30px; line-height:28px; border:3px solid #0b7c39; border-radius:8px; text-align:center; ${MONO} font-size:18px; font-weight:700; color:#0b7c39;">&times;|</span>
+                    <img src="https://kill-bill.app/email-logo.png" width="30" height="30" alt="Killbill" style="display:inline-block; vertical-align:middle; border-radius:7px;" />
                     <span style="display:inline-block; vertical-align:middle; margin-left:10px; ${MONO} font-size:17px; font-weight:500; color:#14170f;">kill<span style="color:#0b7c39;">bill</span></span>
                   </td>
                 </tr>
