@@ -205,7 +205,7 @@ export function brandShell(body) {
               <div style="${MONO} font-size:14px; line-height:1.6; color:#171a17;">${body}</div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e0e0db; margin-top:32px;">
                 <tr>
-                  <td align="center" style="padding:18px 0 0 0; ${MONO} font-size:11.5px; line-height:18px; color:#6e6e67;">reply to this email and you'll reach Rob, not a bot.</td>
+                  <td align="center" style="padding:18px 0 0 0; ${MONO} font-size:11.5px; line-height:18px; color:#6e6e67;">reply to this email and you'll reach Kirtiraj, not a bot.</td>
                 </tr>
               </table>
             </td>
