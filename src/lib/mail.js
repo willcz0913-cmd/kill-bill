@@ -42,7 +42,7 @@ export async function sendMail({ to, subject, html, text }) {
   }
 }
 
-export async function alertRob(subject, html) {
+export async function alertAdmin(subject, html) {
   return sendMail({ to: process.env.DIGEST_ALERT_EMAIL, subject, html });
 }
 
@@ -182,7 +182,7 @@ export function shell(body) {
 
 /* Sponsor-facing mail wears the same card as the newsletter: grey page, white
    card, the logo lockup, and a footer naming who answers replies. Internal
-   alerts to Rob keep the bare shell above. */
+   alerts to the admin keep the bare shell above. */
 export function brandShell(body) {
   return `<!doctype html>
 <html>

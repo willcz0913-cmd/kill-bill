@@ -8,7 +8,7 @@
 
    Env: OPENROUTER_API_KEY (already present), BUILDS_AI_REVIEW. */
 import { buildById, updateBuild } from './db.js';
-import { alertRob, esc } from './mail.js';
+import { alertAdmin, esc } from './mail.js';
 import { GOES, parsePublicUrl } from './builds.js';
 import { generateBuildOg } from './build-og.js';
 
@@ -83,12 +83,12 @@ function parseVerdict(text) {
 }
 
 // Fire-and-forget from POST /api/build. Owns the outcome email (the plain
-// queue email is skipped while the reviewer is on, so Rob gets exactly one
+// queue email is skipped while the reviewer is on, so the admin gets exactly one
 // mail per post either way).
 export async function reviewBuild(id) {
   const adminUrl = `https://kill-bill.app/admin/builds?token=${encodeURIComponent(process.env.ADMIN_TOKEN ?? '')}`;
   const held = async (build, why) => {
-    await alertRob(
+    await alertAdmin(
       `[killbill] build held for you: ${build.name}`,
       `<p><b>${esc(build.name)}</b> · ${esc(build.one_liner)}</p>
        <p>AI reviewer held it: ${esc(why)}</p>
@@ -149,12 +149,12 @@ export async function reviewBuild(id) {
     if (!verdict) throw new Error('unparseable verdict');
 
     if (verdict.decision === 'approve') {
-      // Re-check right before flipping: if Rob acted meanwhile, his call wins.
+      // Re-check right before flipping: if the admin acted meanwhile, their call wins.
       const fresh = await buildById(id);
       if (fresh?.status !== 'pending') return;
       await updateBuild(id, { status: 'live' });
       generateBuildOg(id).catch((err) => console.error(`build og ${id}: ${err.message}`));
-      await alertRob(
+      await alertAdmin(
         `[killbill] AI approved, live: ${build.name}`,
         `<p><b>${esc(build.name)}</b> · ${esc(build.one_liner)} — live now.</p>
          <p>Reviewer: ${esc(verdict.reason ?? '')}</p>

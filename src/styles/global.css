@@ -44,7 +44,7 @@
 }
 
 [data-theme='light'] {
-  /* light — paper terminal, inverted for contrast (Rob 2026-08-06): warm paper
+  /* light — paper terminal, inverted for contrast (2026-08-06): warm paper
      GROUND, pure-white cards that pop off it, darker borders and secondary
      text. The old all-white version read washed out. */
   --bg: #f4f1e8;
@@ -4269,7 +4269,7 @@ button.sp-banner {
   color: var(--muted);
 }
 
-/* ---------- sponsor admin (phone-first: Rob approves from a train) ---------- */
+/* ---------- sponsor admin (phone-first: the admin approves from a train) ---------- */
 
 .admin {
   padding-top: 30px;

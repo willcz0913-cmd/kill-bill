@@ -214,9 +214,9 @@ async function detailsReminders(db, now) {
 
 /* End-of-term reminders, automated next-run offers and the weekly stats email
    were removed 2026-08-05: sponsors get transactional email only. Renewals are
-   Rob, personally, by DM. */
+   handled by the admin, personally, by DM. */
 
-async function robNudges(db, now) {
+async function adminNudges(db, now) {
   const stale = await db.all(
     `SELECT id, slot_id, email, paid_at FROM sponsor_purchases
      WHERE status = 'paid' AND paid_at < ?`,
@@ -284,7 +284,7 @@ async function main() {
   console.log(`sponsor-daily (${DRY ? 'dry' : 'live'}) on ${db.kind}`);
   try {
     await detailsReminders(db, now);
-    await robNudges(db, now);
+    await adminNudges(db, now);
     await bookkeeping(db, now);
   } finally {
     await db.close();

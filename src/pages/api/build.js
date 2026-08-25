@@ -3,7 +3,7 @@
 // owed: one go / a few -> the exact prompt; weeks -> what actually got it
 // done; never got there -> the link requirement bends. Every build owes one
 // line on where it broke. Builds land as status 'pending' and go live when
-// Rob taps approve on /admin/builds.
+// The admin taps approve on /admin/builds.
 import { buildsLive } from '../../lib/flags.js';
 import { getApp } from '../../lib/apps.js';
 import {
@@ -16,7 +16,7 @@ import {
   userBuildSlugs,
   userHandle,
 } from '../../lib/db.js';
-import { alertRob, esc } from '../../lib/mail.js';
+import { alertAdmin, esc } from '../../lib/mail.js';
 import { clientIp, crossOrigin, json, readBody } from '../../lib/request.js';
 import {
   GOES,
@@ -57,7 +57,7 @@ export async function POST({ request, locals, clientAddress }) {
   }
   if (!(await rateLimit('build:all', 1000, 24 * 60 * 60 * 1000))) {
     if (await rateLimit('build:cap-alert', 1, 24 * 60 * 60 * 1000)) {
-      alertRob(
+      alertAdmin(
         '[killbill] build post cap tripped',
         '<p>The global build cap (1000/day) tripped. Model day or a flood, check the builds table. Caps live in src/pages/api/build.js.</p>'
       ).catch((err) => console.error(`build cap alert failed: ${err.message}`));
@@ -195,14 +195,14 @@ export async function POST({ request, locals, clientAddress }) {
 
   if (aiReviewOn()) {
     // Overnight mode: the AI reviewer owns the outcome email (approved-and-
-    // live or held-for-you), so Rob still gets exactly one mail per post.
+    // live or held-for-you), so the admin still gets exactly one mail per post.
     reviewBuild(id).catch((err) => console.error(`build review ${id}: ${err.message}`));
   } else {
     // Approve-first means the queue email IS the doorbell: without it a
-    // build sits pending until Rob happens to look. One mail per post.
+    // build sits pending until the admin happens to look. One mail per post.
     // Subject is a mail header, not HTML: name is already control-char
     // stripped by clean(), so no esc() (it would show literal entities).
-    alertRob(
+    alertAdmin(
       `[killbill] build in the queue: ${name}`,
       `<p>New build waiting for approval:</p>
        <p><b>${esc(name)}</b> · ${esc(oneLiner)}</p>

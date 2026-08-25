@@ -2,7 +2,7 @@ import {
   activePurchases, purchaseById, rateLimit, setSlotNextState, setSlotPrice,
   updatePurchase, waitlistEmails,
 } from '../../../lib/db.js';
-import { alertRob, brandShell, esc, sendBatch, sendMail, shell, unsubscribedEmails } from '../../../lib/mail.js';
+import { alertAdmin, brandShell, esc, sendBatch, sendMail, shell, unsubscribedEmails } from '../../../lib/mail.js';
 import { json, readBody } from '../../../lib/request.js';
 import {
   cleanText, cleanTint, cleanUrl, clearCache, getBoard, isAdmin, isLive, LIMITS, nextRunStart,
@@ -48,7 +48,7 @@ export async function POST({ request }) {
     return wantsJson ? json({ ok: true, message }) : backTo(message);
   };
 
-  /* Rob approves from his phone, where a bare JSON 409 is invisible. Form posts
+  /* The admin approves from their phone, where a bare JSON 409 is invisible. Form posts
      go back to the page with the reason; JSON callers keep the status code. */
   const fail = (error, status) => (wantsJson ? json({ error }, status) : backTo(error));
 
@@ -227,7 +227,7 @@ export async function POST({ request }) {
     } catch (err) {
       await updatePurchase(purchase.id, { status: 'reject_failed' }, REFUNDABLE);
       clearCache();
-      await alertRob(
+      await alertAdmin(
         `sponsor refund FAILED (${purchase.slot_id})`,
         shell(
           `<p>Refunding <code>${esc(purchase.id)}</code> failed: ${esc(err?.message || err)}</p>`

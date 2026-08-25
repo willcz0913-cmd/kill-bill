@@ -2,7 +2,7 @@
    full JSON entry with AI (validated against the same rules as CI), fetches
    the favicon, and opens a PR on the public repo FROM THE BOT'S FORK — the
    server token has zero write access to the real repo, so a leak can at worst
-   vandalize the fork. Rob reviews and merges from his phone.
+   vandalize the fork. The admin reviews and merges from their phone.
 
    Env (Railway + local .env):
      GITHUB_BOT_USER   — the bot account's login (owns the fork)
@@ -17,7 +17,7 @@
 import { CATEGORIES, MOAT_TAGS, allApps } from './apps.js';
 import { validateApp, SLUG_RE } from './validate-app.js';
 import { updateSubmission } from './db.js';
-import { alertRob, esc } from './mail.js';
+import { alertAdmin, esc } from './mail.js';
 
 const MODEL = 'anthropic/claude-opus-5';
 const UPSTREAM = 'kirtirajsinh/kill-bill';
@@ -369,9 +369,9 @@ export async function processSubmission(id, input) {
     const prUrl = await openPr({ entry, icon, submitter, take });
     await updateSubmission(id, { status: 'done', pr_url: prUrl });
 
-    // Per-PR email to Rob disabled on his ask (2026-08-18): too noisy — the
+    // Per-PR email to the admin disabled on request (2026-08-18): too noisy — the
     // GitHub PR notification already covers it. Re-enable by uncommenting.
-    // alertRob(
+    // alertAdmin(
     //   `[killbill] submission PR: ${entry.name} (${entry.verdict})`,
     //   `<p>New app submission turned into a PR:</p>
     //    <p><a href="${esc(prUrl)}">${esc(prUrl)}</a></p>
