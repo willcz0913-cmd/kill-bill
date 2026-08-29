@@ -2,7 +2,7 @@ import {
   activePurchases, purchaseById, rateLimit, setSlotNextState, setSlotPrice,
   updatePurchase, waitlistEmails,
 } from '../../../lib/db.js';
-import { alertAdmin, brandShell, esc, sendBatch, sendMail, shell, unsubscribedEmails } from '../../../lib/mail.js';
+import { alertAdmin, brandShell, button, esc, sendBatch, sendMail, shell, unsubscribedEmails } from '../../../lib/mail.js';
 import { json, readBody } from '../../../lib/request.js';
 import {
   cleanText, cleanTint, cleanUrl, clearCache, getBoard, isAdmin, isLive, LIMITS, nextRunStart,
@@ -188,6 +188,9 @@ export async function POST({ request }) {
       ['submitted']
     );
     if (!changed) return fail('not awaiting approval', 409);
+    // Same per-purchase token as the details link; it's the only copy the buyer
+    // gets of their private stats page, so the approval email is where it lands.
+    const statsLink = `${siteUrl('/sponsor/stats')}?t=${encodeURIComponent(purchase.details_token)}`;
     await sendMail({
       to: purchase.email,
       subject: scheduled
@@ -200,6 +203,9 @@ export async function POST({ request }) {
           : ` right now, and runs until ${esc(shortDate(endsAt))} (${RUN_DAYS * (Number(purchase.months) || 1)} days).</p>`)
         + `<p>Your link carries campaign tags, so the traffic shows up in your analytics as`
         + ` killbill / referral.</p>`
+        + `<p>${button(statsLink, 'watch your numbers')}</p>`
+        + `<p style="color:#6e6e67; font-size:12px;">Private to you: clicks, countries and CTR for`
+        + ` your slot, first-party and bot-filtered. Keep this link; it's the only copy.</p>`
       ),
     });
     return done(`${purchase.slot_id} live ${scheduled ? `${shortDate(startsAt)} to` : 'until'} ${shortDate(endsAt)}`);
