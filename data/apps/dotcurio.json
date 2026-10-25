@@ -1,0 +1,83 @@
+{
+  "slug": "dotcurio",
+  "name": "DotCurio",
+  "domain": "dotcurio.com",
+  "category": "ai-search",
+  "subcategory": "AI and creative products directory",
+  "tagline": "Curated directory for AI and creative products - discover, compare, and submit",
+  "priceMonthly": null,
+  "pricing": {
+    "plan": "Free (default)",
+    "basis": "free submission; optional one-time promotion packages",
+    "unit": "one-time",
+    "currency": "USD",
+    "native": "Free; Fast Pass 29.9 USD, Featured 39.9 USD, Spotlight 49.9 USD (one-time)",
+    "source": "https://dotcurio.com/pricing",
+    "checkedOn": "2026-10-26",
+    "confidence": "high",
+    "notes": "Free tier: review within 1-2 months, no guarantee of indexing. Paid packages publish directly with dofollow links and better placement.",
+    "tiers": [
+      {
+        "name": "Free",
+        "monthly": 0,
+        "annualPerMonth": 0,
+        "per": "flat",
+        "limits": "Review within 1-2 months; no guarantee of indexing.",
+        "notes": null
+      },
+      {
+        "name": "Fast Pass",
+        "monthly": null,
+        "annualPerMonth": null,
+        "per": "flat",
+        "limits": "One-time 29.9 USD; no review required, 3+ dofollow links, better discovery placement.",
+        "notes": "One-time payment, not a subscription."
+      },
+      {
+        "name": "Featured",
+        "monthly": null,
+        "annualPerMonth": null,
+        "per": "flat",
+        "limits": "One-time 39.9 USD; no review required, 4+ dofollow links, Featured Apps placement.",
+        "notes": "One-time payment, not a subscription."
+      },
+      {
+        "name": "Spotlight",
+        "monthly": null,
+        "annualPerMonth": null,
+        "per": "flat",
+        "limits": "One-time 49.9 USD; 5+ dofollow links, Featured Apps placement, top bar spotlight for 7 days.",
+        "notes": "One-time payment, not a subscription."
+      }
+    ],
+    "freeTierCaps": "Review within 1-2 months; indexing not guaranteed",
+    "billingTerms": "one-time packages; no subscription",
+    "priceChanges": [],
+    "hiddenCosts": null,
+    "tiersCheckedOn": "2026-10-26",
+    "tiersSources": ["https://dotcurio.com/pricing"]
+  },
+  "verdict": "kinda",
+  "verdictConfidence": "medium",
+  "verdictSummary": "A prompt can list AI tools on demand, but it will not keep a categorized index fresh, accept product submissions, or maintain editorial comparisons across products. As a single-player lookup the directory is replaceable; as an up-to-date, curated, submission-driven index it is not a one-shot build.",
+  "coreLoopDIY": "Prompt an LLM for a categorized list of AI and creative products and render the result as a static directory page.",
+  "diyTimeEstimate": "one sitting",
+  "requirements": ["an LLM API key", "static hosting for the directory page"],
+  "whatYouLose": [
+    "a maintained, categorized index that stays current",
+    "a product submission pipeline with review and promotion tiers",
+    "cross-product comparisons and rankings kept in one place"
+  ],
+  "moatTags": ["execution-polish"],
+  "moatNotes": "the moat is curation and upkeep; the dataset itself is rebuildable by crawling",
+  "whyPeopleStillPay": null,
+  "priorArt": [],
+  "alternatives": [],
+  "rejectedAlternatives": [],
+  "relatedSlugs": [],
+  "pagePriority": 3,
+  "verifiedOneShot": false,
+  "notes": "Directory/aggregator: value is curation and freshness rather than a single-player workflow.",
+  "prompt": "Build me a curated directory of AI and creative products with categories, product pages, alternatives, and a submission form.",
+  "promptCurated": false
+}
