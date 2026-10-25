@@ -1,0 +1,48 @@
+{
+  "slug": "ace-step",
+  "name": "ACE-Step",
+  "domain": "ace-step.club",
+  "category": "ai-audio",
+  "subcategory": "open-source music generation model",
+  "tagline": "Open-source foundation model that turns text prompts into original, high-quality music.",
+  "priceMonthly": null,
+  "discontinued": null,
+  "pricing": {
+    "plan": null,
+    "basis": "not applicable - the model is open source and free",
+    "unit": "flat",
+    "native": null,
+    "source": "https://github.com/ACE-Step/ACE-Step",
+    "checkedOn": "2026-10-26",
+    "confidence": "high",
+    "notes": "Apache-2.0 licensed foundation model; no paid tier. Running your own inference costs GPU time.",
+    "freeTier": "Entire model is free and open source under Apache-2.0.",
+    "freeTierCaps": "no paid tier",
+    "tiers": [],
+    "tiersCheckedOn": "2026-10-26",
+    "tiersSources": [
+      "https://github.com/ACE-Step/ACE-Step"
+    ]
+  },
+  "verdict": "no",
+  "verdictConfidence": "high",
+  "verdictSummary": "ACE-Step is not a wrapper you can prompt your way around - it IS the model. An Apache-2.0 music generation foundation model you run yourself; the value is the weights plus the GPU time behind them.",
+  "coreLoopDIY": null,
+  "diyTimeEstimate": null,
+  "requirements": [],
+  "whatYouLose": [],
+  "moatTags": [
+    "proprietary-models"
+  ],
+  "moatNotes": "It is the model itself, open sourced - there is nothing to replace it with; you would just run ACE-Step.",
+  "whyPeopleStillPay": null,
+  "priorArt": [],
+  "alternatives": [],
+  "rejectedAlternatives": [],
+  "relatedSlugs": [],
+  "pagePriority": 3,
+  "verifiedOneShot": false,
+  "notes": "Open-source music generation foundation model (Apache-2.0, ~5k stars). Free already.",
+  "prompt": null,
+  "promptCurated": false
+}
